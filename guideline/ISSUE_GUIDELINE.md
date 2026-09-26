@@ -126,7 +126,8 @@ Tên lớp lấy từ `mini-task/data/traffic_sign/schema.json` của lab. Nhóm
 - [H] → `danger` (ví dụ "người đi bộ qua đường" nằm trong nhóm danger).
 - GTSDB → `danger`.
 
-Nghĩa là V1.2 lệch cả [H] lẫn GTSDB. `cvat_parser.py` cũng chép lỗi này: comment Rule 5 ghi "GTSDB #42 = hết tất cả hạn
+Nghĩa là V1.2 lệch cả [H] lẫn GTSDB. V1.2 còn **tự mâu thuẫn**: mục 2 ghi *Children* (mã 28)
+là ví dụ của `danger`, trong khi bảng mục 4 xếp cả dải 27–31 (gồm mã 28) vào `other`. `cvat_parser.py` cũng chép lỗi này: comment Rule 5 ghi "GTSDB #42 = hết tất cả hạn
 chế".
 
 ![G-01: biển đi bộ qua đường, 00054](issue_images/G01_00054_pedestrian_danger.png)
