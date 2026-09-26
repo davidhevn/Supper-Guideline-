@@ -81,10 +81,16 @@ def ensure_user(client, url: str, username: str, password: Optional[str], email:
     from cvat_sdk.api_client import ApiClient, Configuration, models
 
     # đăng ký qua endpoint công khai /api/auth/register (không cần quyền admin)
-    with ApiClient(Configuration(host=url)) as anon:
-        anon.auth_api.create_register(models.RegisterSerializerExRequest(
-            username=username, email=email or f"{username}@annotator.local",
-            password1=password, password2=password, first_name=username, last_name="annotator"))
+    from cvat_sdk.api_client.exceptions import ApiException
+
+    try:
+        with ApiClient(Configuration(host=url)) as anon:
+            anon.auth_api.create_register(models.RegisterSerializerExRequest(
+                username=username, email=email or f"{username}@annotator.local",
+                password1=password, password2=password, first_name=username, last_name="annotator"))
+    except ApiException as e:
+        raise SystemExit(f"CVAT không tạo được tài khoản '{username}' ({e.status}): {e.body}\n"
+                         "→ mật khẩu cần ≥ 8 ký tự, không quá phổ biến, không giống tên đăng nhập; đổi bằng --password")
     user = find_user(client, username)
     if user is None:
         raise SystemExit(f"Đã gọi register nhưng không thấy user '{username}' — admin phải mở Django admin kiểm tra")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """So export CVAT của annotator với export GT (gold) → đúng / sai / thiếu / thừa + ứng viên edge case.
 
-Chạy offline, chỉ đọc file export "CVAT for images 1.1" (.zip hoặc annotations.xml), không cần CVAT đang chạy.
+Chạy offline, đọc export "CVAT for images 1.1" (.zip / annotations.xml) hoặc COCO 1.0 (.json), không cần CVAT.
 Chỉ cần Python 3. numpy + Pillow (cài bằng `python sign.py install`) chỉ dùng cho polygon/mask IoU và ảnh overlay.
 
     python evaluate.py --gt gold.zip --pred an.zip binh.zip \
@@ -146,7 +146,44 @@ def _geom(node: ET.Element) -> Tuple[List[Point], Optional[List[int]]]:
     return [], None
 
 
+def _attr_str(v) -> str:
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    return UNDEF if v is None or v == "" else str(v)
+
+
+def parse_coco(path: Path) -> Doc:
+    """COCO 1.0 (export CVAT hoặc file GT của nhóm): bbox → box, polygon → polygon, RLE → bbox của mask."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if "images" not in data or "categories" not in data:
+        raise SystemExit(f"{path}: JSON không phải COCO (cần images + categories + annotations)")
+    doc = Doc(name=path.stem)
+    cats = {c["id"]: c["name"] for c in data["categories"]}
+    by_id = {}
+    for im in data["images"]:
+        sample = Path(im["file_name"]).stem
+        by_id[im["id"]] = sample
+        doc.samples.append(sample)
+        doc.sizes[sample] = (int(im.get("width", 0)), int(im.get("height", 0)))
+    for a in data.get("annotations", []):
+        sample = by_id[a["image_id"]]
+        attrs = {k: _attr_str(v) for k, v in (a.get("attributes") or {}).items()}
+        seg = a.get("segmentation")
+        if isinstance(seg, list) and seg and len(seg[0]) >= 6:
+            pts, kind = [(seg[0][i], seg[0][i + 1]) for i in range(0, len(seg[0]) - 1, 2)], "polygon"
+        else:
+            x, y, w, h = a["bbox"]
+            pts, kind = [(x, y), (x + w, y + h)], "box" if not isinstance(seg, dict) else "mask"
+        doc.objects[sample].append(Obj(sample, cats.get(a["category_id"], "?"), kind, pts, attrs))
+    for objs in doc.objects.values():
+        for i, o in enumerate(objs):
+            o.idx = i
+    return doc
+
+
 def parse_export(path: Path) -> Doc:
+    if path.suffix.lower() == ".json":
+        return parse_coco(path)
     root = ET.fromstring(_read_xml(path))
     doc = Doc(name=path.stem)
     for image in root.findall("image"):
@@ -779,8 +816,8 @@ def load_schema(path: Optional[Path]) -> Dict[str, dict]:
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--gt", required=True, type=Path, help="export GT/gold (CVAT for images 1.1 .zip/.xml)")
-    ap.add_argument("--pred", required=True, nargs="+", type=Path, help="export của annotator (1 hoặc nhiều)")
+    ap.add_argument("--gt", required=True, type=Path, help="GT/gold: CVAT for images 1.1 (.zip/.xml) hoặc COCO 1.0 (.json)")
+    ap.add_argument("--pred", required=True, nargs="+", type=Path, help="bài của annotator (1 hoặc nhiều), cùng các định dạng trên")
     ap.add_argument("--labels", type=Path, help="03_cvat_labels.json để kiểm schema (tuỳ chọn)")
     ap.add_argument("--config", type=Path, help="eval_config.json (ngưỡng, severity, label ignore, escalate)")
     ap.add_argument("--images", type=Path, help="thư mục ảnh gốc → vẽ overlay vào <out>/viz/")

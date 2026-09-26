@@ -9,7 +9,7 @@
     python sign.py setup an binh                # GOLD + tài khoản/task cho từng người
     python sign.py list                         # task nào giao cho ai
     python sign.py evaluate                     # export + chấm → reports/<name>/summary.md (+ data/qa_reports của nhóm)
-    python sign.py pack                         # zip RIÊNG TƯ (có data + GT) để chuyển cho người trong nhóm
+    python sign.py pack                         # zip RIÊNG TƯ (kèm GT) — giải nén tại gốc repo nhóm
 
 Cấu hình nằm ở project.json (đường dẫn tương đối so với thư mục này).
 """
@@ -95,45 +95,48 @@ def cmd_selftest(args) -> None:
             fn(Path(tmp))
     print(f"✓ {len(tests)} test tổng hợp đạt")
 
-    ref = HERE / "data" / "gt" / "gt_gtsdb28_ref.xml"
-    if not ref.exists():
-        print("  (bỏ qua bước chấm dữ liệu thật: chưa có data/gt/gt_gtsdb28_ref.xml — xem README mục 'Dữ liệu')")
+    p = load_project()
+    ref = Path(p.get("gt") or "")
+    if not ref.is_file() or ref.suffix.lower() != ".json":
+        print("  (bỏ qua bước chấm dữ liệu thật: project chưa có GT COCO — xem README mục 'Dữ liệu')")
         return
-    import xml.etree.ElementTree as ET
     import evaluate
 
     out = HERE / "reports" / "selftest"
     shutil.rmtree(out, ignore_errors=True)
     out.mkdir(parents=True)
-    root = ET.parse(ref).getroot()
-    for img in list(root.findall("image")):
-        n = Path(img.get("name")).stem
-        if n not in {"GTS01", "GTS03", "GTS06", "GTS07", "GTS12"}:
-            root.remove(img)
-            continue
-        bx = img.findall("box")
-        if n == "GTS01":
-            img.remove(bx[2])                                                     # sót 1 biển nhỏ
-        if n == "GTS03":
-            bx[0].set("label", "prohibitory")                                     # sai nhóm biển (GT: danger)
-        if n == "GTS06":
-            bx[0].find("attribute[@name='sign_class']").text = "unknown"          # không đọc được class
-        if n == "GTS07":                                                          # box thừa trên ảnh không có biển
-            ET.SubElement(img, "box", label="other", source="manual", occluded="0",
-                          xtl="600", ytl="300", xbr="630", ybr="330", z_order="0")
-    pred = out / "bai_gia_lap.xml"
-    ET.ElementTree(root).write(pred, encoding="utf-8", xml_declaration=True)
-    images = HERE / "data" / "images" / "gtsdb28"
-    evaluate.main(["--gt", str(ref), "--pred", str(pred), "--labels", str(HERE / "schema" / "labels_v1.2.json"),
-                   "--config", str(HERE / "schema" / "eval_reference.json"), "--out", str(out)]
-                  + (["--images", str(images)] if images.exists() else []))
+    coco = json.loads(ref.read_text(encoding="utf-8"))
+    anns = coco["annotations"]
+    cat_id = {c["name"]: c["id"] for c in coco["categories"]}
+    by_img: dict = {}
+    for a in anns:
+        by_img.setdefault(a["image_id"], []).append(a)
+    imgs = [i for i in sorted(by_img) if len(by_img[i]) >= 2][:3]
+    if len(imgs) < 3:
+        print("  (bỏ qua bước chấm dữ liệu thật: cần ≥ 3 ảnh có ≥ 2 biển)")
+        return
+    a0, a1, a2 = by_img[imgs[0]], by_img[imgs[1]], by_img[imgs[2]]
+    anns.remove(min(a0, key=lambda a: a["area"]))                                      # sót biển nhỏ nhất
+    a1[0]["category_id"] = next(v for k, v in cat_id.items() if cat_id[k] != a1[0]["category_id"])  # sai nhóm biển
+    a2[0]["attributes"]["sign_class"] = "unknown"                                      # không đọc được class
+    anns.append({"id": 10 ** 6, "image_id": imgs[2], "category_id": a2[0]["category_id"],  # box thừa ở góc trống
+                 "bbox": [5, 5, 30, 30], "area": 900, "iscrowd": 0, "segmentation": [], "attributes": {}})
+    pred = out / "bai_gia_lap.json"
+    pred.write_text(json.dumps(coco), encoding="utf-8")
+    argv = ["--gt", str(ref), "--pred", str(pred), "--labels", str(p["labels"]), "--out", str(out)]
+    if p.get("eval_config"):
+        argv += ["--config", str(p["eval_config"])]
+    if p.get("images") and Path(p["images"]).exists():
+        argv += ["--images", str(p["images"])]
+    evaluate.main(argv)
     got: dict = {}
     for r in csv.DictReader((out / "objects.csv").open(encoding="utf-8")):
         got[r["status"]] = got.get(r["status"], 0) + 1
-    want = {"correct": 9, "wrong_label": 1, "missing": 1, "extra": 1, "annotator_unknown": 1}
+    n = sum(len(v) for v in by_img.values())
+    want = {"correct": n - 3, "wrong_label": 1, "missing": 1, "extra": 1, "annotator_unknown": 1}
     if got != want:
         sys.exit(f"✗ selftest sai: mong {want}, nhận {got}")
-    print(f"✓ Chấm dữ liệu thật: phát hiện đủ 4 lỗi cài sẵn → {out / 'summary.md'}")
+    print(f"✓ Chấm dữ liệu thật ({ref.name}): phát hiện đủ 4 lỗi cài sẵn → {out / 'summary.md'}")
 
 
 def cmd_init(args) -> None:
@@ -175,7 +178,7 @@ def cmd_show(args) -> None:
         v = p.get(k)
         ok = "" if k in ("name", "gt_format") else ("✓" if v and Path(v).exists() else
                                                     "(chưa có — GOLD tạo trống)" if k == "gt" and not v else "✗ không có")
-        extra = f" ({len([f for f in Path(v).iterdir() if f.is_file()])} file)" if k == "images" and ok == "✓" else ""
+        extra = f" ({len([f for f in Path(v).iterdir() if f.suffix.lower() in ('.jpg', '.jpeg', '.png', '.bmp')])} ảnh)" if k == "images" and ok == "✓" else ""
         print(f"  {k:<12} {v}{extra} {ok}")
 
 
@@ -257,6 +260,7 @@ def write_group_reports(repo: Path, name: str, exports: Path, out: Path) -> None
         passed = sum(d["status"] == "PASS" for d in gt_rows)
         score = round(100.0 * passed / len(gt_rows), 1) if gt_rows else 0.0
         report = {
+            "metrics": group_metrics(rs, exports / f"{ann}.zip"),
             "labeler": ann, "scene": name, "evaluated_at": datetime.now().isoformat(timespec="seconds"),
             "tool": "members/phong/cvat_eval",
             "summary": {"total_objects": len(gt_rows), "pass": passed, "fail": len(gt_rows) - passed,
@@ -271,20 +275,47 @@ def write_group_reports(repo: Path, name: str, exports: Path, out: Path) -> None
         print(f"  → {dst.relative_to(repo)} · {sub.relative_to(repo)}/submission_{name}.xml")
 
 
+def group_metrics(rows: list, submission: Path) -> dict:
+    """Cùng tên và công thức với khối metrics của cvat_parser.py, nhưng TP tính trên cặp ghép theo IoU."""
+    import evaluate
+
+    labels = ("prohibitory", "mandatory", "danger", "other")
+    doc = evaluate.parse_export(submission)
+    objs = [o for v in doc.objects.values() for o in v]
+    filled = 0
+    for o in objs:
+        filled += 3  # occluded / truncated / relevant_to_ego là checkbox, luôn có giá trị
+        filled += int(o.attrs.get("sign_class", evaluate.UNDEF) not in ("", evaluate.UNDEF))
+        filled += int(o.attrs.get("readable", "").lower() in ("yes", "no", "uncertain"))
+    lab = lambda txt: txt.split("[", 1)[0]
+    gt_n = {l: sum(1 for r in rows if r["gt"] and lab(r["gt"]) == l) for l in labels}
+    pred_n = {l: sum(1 for o in objs if o.label == l) for l in labels}
+    tp = {l: sum(1 for r in rows if r["gt"] and r["pred"] and lab(r["gt"]) == lab(r["pred"]) == l) for l in labels}
+    pct = lambda a, b: round(100.0 * a / b, 1) if b else 0.0
+    return {"attribute_completion_rate": pct(filled, 5 * len(objs)),
+            "precision_per_class": {l: pct(tp[l], pred_n[l]) for l in labels},
+            "recall_per_class": {l: pct(tp[l], gt_n[l]) for l in labels}}
+
+
 def cmd_pack(args) -> None:
+    """Zip đặt ở gốc repo: code của thư mục này + GT/ảnh mà project.json trỏ tới (GT không có trên git)."""
+    p = load_project()
+    repo = Path(p.get("group_repo") or HERE)
     dist = HERE / "dist"
     dist.mkdir(exist_ok=True)
-    out = dist / "cvat_eval_phong.zip"
-    n = 0
+    out = dist / "cvat_eval_phong_kem_data.zip"
+    files = [f for f in HERE.rglob("*") if f.is_file() and not PACK_SKIP & set(f.relative_to(HERE).parts)]
+    for key in ("gt", "images"):
+        v = Path(p.get(key) or "")
+        if v.is_file():
+            files.append(v)
+        elif v.is_dir():
+            files += [f for f in v.iterdir() if f.is_file()]
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
-        for f in sorted(HERE.rglob("*")):
-            rel = f.relative_to(HERE)
-            if f.is_dir() or PACK_SKIP & set(rel.parts):
-                continue
-            zf.write(f, Path("cvat_eval") / rel)
-            n += 1
-    print(f"✓ {out} ({n} file, {out.stat().st_size / 1e6:.1f} MB)\n"
-          "  ⚠ Zip CÓ data + GT: chỉ gửi riêng cho người trong nhóm (Drive), KHÔNG đưa lên GitHub. Không chứa .env.")
+        for f in sorted(set(files)):
+            zf.write(f, f.resolve().relative_to(repo.resolve()))
+    print(f"✓ {out} ({len(set(files))} file, {out.stat().st_size / 1e6:.1f} MB) — giải nén tại GỐC repo nhóm\n"
+          "  ⚠ Có GT: chỉ gửi riêng cho người trong nhóm (Drive), KHÔNG đưa lên GitHub. Không chứa .env.")
 
 
 def main() -> int:

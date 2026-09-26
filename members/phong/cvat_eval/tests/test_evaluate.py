@@ -236,3 +236,18 @@ def test_normalize_text_attrs(tmp_path):
     cfg["normalize_text"] = True
     rows, _ = ev.compare(ev.parse_export(g), ev.parse_export(p), cfg, {})
     assert rows[0].status == "correct"
+
+
+def test_coco_json_matches_cvat_xml(tmp_path):
+    import json
+    coco = {"images": [{"id": 1, "file_name": "A.png", "width": 100, "height": 100}],
+            "categories": [{"id": 1, "name": "other"}],
+            "annotations": [{"id": 1, "image_id": 1, "category_id": 1, "bbox": [10, 10, 30, 30], "segmentation": [],
+                             "attributes": {"sign_class": "stop", "occluded": False}}]}
+    g = tmp_path / "gt.json"
+    g.write_text(json.dumps(coco), encoding="utf-8")
+    p = write(tmp_path, "p", img(0, "A.png",
+              '<box label="other" source="manual" occluded="0" xtl="10" ytl="10" xbr="40" ybr="40" z_order="0">'
+              '<attribute name="sign_class">stop</attribute><attribute name="occluded">false</attribute></box>'))
+    rows, _ = ev.compare(ev.parse_export(g), ev.parse_export(p), ev.load_config(None), {})
+    assert [r.status for r in rows] == ["correct"]

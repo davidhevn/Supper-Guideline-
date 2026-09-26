@@ -7,8 +7,10 @@ Công cụ cá nhân nằm trong repo nhóm, **không sửa file nào của nhó
 | `LABELING_GUIDELINE_V1.md` (V1.2) | dán thẳng vào nút **Guide** của mọi task CVAT — nhóm sửa guideline thì chạy `setup --replace` để dán lại |
 | 4 label `prohibitory/mandatory/danger/other` + 5 attribute | `schema/labels_v1.2.json` |
 | `IOU_THRESHOLD = 0.7`, Rule 3 so `sign_class/occluded/truncated/readable` | `schema/eval_v1.2.json`: box IoU < 0.7 → `geometry_loose`, so đúng 4 attribute đó |
-| `data/user_submissions/<người>/`, `data/qa_reports/` | `evaluate` ghi bài nộp + `report_<người>_<name>.json` (khung `summary/qa_flags/details`, PASS khi ≥ 80%) vào đúng chỗ đó |
-| Quy định **không push ảnh/GT** | `data/` của thư mục này bị `.gitignore`; data chia sẻ riêng qua Drive |
+| `data/raw/` (ảnh), `data/ground_truth/` (GT, gitignore) | **mặc định** đọc ảnh và GT ở đây (`project.json`) |
+| `data/user_submissions/<người>/`, `data/qa_reports/` | `evaluate` ghi bài nộp + `report_<người>_<name>.json` (khung `summary/metrics/qa_flags/details` như `cvat_parser.py`, PASS khi ≥ 80%) |
+| Định dạng GT CVAT XML / COCO JSON | đọc cả hai (GT nhóm dạng COCO: `data/ground_truth/*.json`) |
+| Quy định **không push GT** | GT nằm trong `data/ground_truth/*.json` (đã bị `.gitignore` của nhóm chặn); chia sẻ riêng bằng `pack` |
 
 Khác `cvat_parser.py`: tool này ghép box người gán ↔ GT **theo vị trí (IoU) trên từng ảnh**, không theo `id`, nên đọc
 được export CVAT thật (nhiều ảnh, id hai bên khác nhau). Nó cũng dựng luôn task/tài khoản trên CVAT, vẽ ảnh
@@ -22,7 +24,7 @@ Windows gõ `py`, macOS/Linux gõ `python3` thay cho `python`. Cần Python ≥ 
 ```bash
 git clone https://github.com/davidhevn/Supper-Guideline-.git
 cd Supper-Guideline-/members/phong/cvat_eval
-# chép data/ nhận qua Drive vào đây (xem "Dữ liệu")
+# GT không có trên git: giải nén zip GT nhận qua Drive tại GỐC repo (xem "Dữ liệu")
 python sign.py install          # 1 lần: tạo .venv, cài cvat-sdk 2.74.1 + numpy + Pillow
 python sign.py selftest         # tự kiểm, không cần CVAT
 python sign.py init             # URL CVAT + tài khoản admin → .env (không bao giờ lên git)
@@ -36,33 +38,35 @@ Người gán chỉ cần **trình duyệt**: đăng nhập tài khoản đượ
 
 ## Dữ liệu
 
-`data/` không lên GitHub. Bố cục:
+Mặc định (`project.json`, tên task `grp`) dùng data chung của nhóm ở gốc repo:
 
-```
-data/images/<bộ ảnh>/     ảnh; tên file = sample_id
-data/gt/<file GT>         CVAT for images 1.1 (.xml / .zip export) hoặc COCO 1.0 (.json)
-```
+| | Đường dẫn | Trên git? |
+|---|---|---|
+| Ảnh | `data/raw/` — 3 ảnh GTSDB `00054`, `00177`, `00366` | có (nhóm đã đẩy) |
+| GT | `data/ground_truth/gt_gtsdb_raw.json` — COCO 1.0, schema V1.2, 12 biển | **không** (`data/ground_truth/*.json` bị gitignore) |
 
-Bộ khởi đầu (`python sign.py pack` → `dist/cvat_eval_phong.zip`, gửi riêng qua Drive): 28 ảnh GTSDB `GTS01–28`
-của lab Day 9 + `gt_gtsdb28_ref.xml` = GT GTSDB đổi sang schema V1.2 (55 box). GT này chỉ đúng **box + nhóm biển +
-sign_class**; readable/occluded/truncated để mặc định, nên dùng với `schema/eval_reference.json`.
+GT này dựng từ `gt.txt` gốc của GTSDB cho đúng 3 ảnh trên: **box + nhóm biển + sign_class là thật**;
+readable/occluded/truncated/relevant_to_ego để mặc định, vì vậy đi kèm `schema/eval_reference.json` (không chấm các
+attribute đó). Khi nhóm có GT tự gán đủ attribute theo guideline → đổi sang `schema/eval_v1.2.json`.
 
-### Thêm data + GT của riêng bạn
+Chia GT cho người trong nhóm: `python sign.py pack` → `dist/cvat_eval_phong_kem_data.zip`, gửi riêng qua Drive, người
+nhận **giải nén tại gốc repo** (file rơi đúng vào `data/ground_truth/`).
 
-1. Chép ảnh vào `data/images/<tên bộ>/`.
-2. Có GT: đặt vào `data/gt/`. Chưa có: `--gt ""` ở bước 3 → GOLD tạo trống, bạn tự gán GT trên CVAT (bước 4).
+### Thêm ảnh + GT mới
+
+1. Ảnh vào `data/raw/` của nhóm (hoặc thư mục riêng, vd `members/phong/cvat_eval/data/images/<bộ>/` — đã gitignore).
+2. GT (CVAT 1.1 `.xml`/`.zip` hoặc COCO `.json`) vào `data/ground_truth/`. **Đặt đuôi `.json`** thì gitignore của
+   nhóm tự chặn; file `.xml` ở đó **không** bị chặn — cẩn thận khi commit. Chưa có GT: `--gt ""` → GOLD tạo trống,
+   tự gán trên CVAT.
 3. Trỏ project sang bộ mới (đổi `--name` để task không lẫn bộ cũ):
    ```bash
-   python sign.py use --name mydata --images data/images/mydata --gt data/gt/gt_mydata.xml \
-       --gt-format "CVAT 1.1" --eval-config schema/eval_v1.2.json
+   python sign.py use --name bo2 --images ../../../data/raw --gt ../../../data/ground_truth/gt_bo2.json \
+       --gt-format "COCO 1.0" --eval-config schema/eval_v1.2.json
    python sign.py show
    ```
-   GT dạng COCO: `--gt data/gt/x.json --gt-format "COCO 1.0"`. GT tự làm theo guideline (có readable/occluded/…)
-   thì dùng `schema/eval_v1.2.json`; GT chỉ có box + nhóm biển thì dùng `schema/eval_reference.json`.
-4. `python sign.py setup an binh` → task `mydata-GOLD` nạp sẵn GT (chỉnh tiếp trên CVAT nếu cần) + task cho từng
-   người. **Không dùng lại ảnh GOLD làm ví dụ trong guideline.**
-5. Chỉ giao một phần ảnh (vd bộ blind): `python sign.py setup peer1 --images data/images/mydata_blind`. Khi chấm,
-   ảnh GOLD không có trong bài được bỏ qua, không tính thiếu.
+4. `python sign.py setup an binh` → task `bo2-GOLD` nạp sẵn GT + task cho từng người.
+5. Chỉ giao một phần ảnh (vd bộ blind): `python sign.py setup peer1 --images <thư mục ảnh blind>`. Khi chấm, ảnh
+   GOLD không có trong bài được bỏ qua, không tính thiếu.
 
 ## Kết quả chấm
 
@@ -103,10 +107,10 @@ hotspot điện thoại.
 |---|---|
 | `Chưa cài thư viện` | `python sign.py install` |
 | `Cần Python ≥ 3.10` / `python` không nhận | cài Python từ python.org (Windows tick *Add to PATH*), Windows thử `py` |
-| `project.json: 'images' … không tồn tại` | chưa chép `data/` từ Drive, hoặc `python sign.py use …` |
+| `project.json: 'gt' … không tồn tại` | chưa giải nén zip GT tại gốc repo, hoặc `python sign.py use …` |
 | không kết nối / `401` | CVAT chưa bật (`docker compose start`) hoặc sai tài khoản → `python sign.py init` |
 | `superuser=False` | tạo admin: `docker exec -it cvat_server bash -ic "python3 ~/manage.py createsuperuser"` |
-| mật khẩu người gán bị từ chối | ≥ 8 ký tự, không quá phổ biến |
+| mật khẩu người gán bị từ chối | ≥ 8 ký tự, không quá phổ biến, không giống tên đăng nhập |
 | cảnh báo `not compatible with SDK` | CVAT khác 2.74.1; sửa `requirements.txt` cho khớp rồi `install` lại |
 
 ## File
@@ -114,7 +118,7 @@ hotspot điện thoại.
 | File | Là gì |
 |---|---|
 | `sign.py` | lệnh chính |
-| `project.json` | đang dùng data/GT/schema/guideline/config nào |
+| `project.json` | đang dùng data/GT/schema/guideline/config nào (mặc định: data chung của nhóm) |
 | `cvat_env.py` | phần CVAT: tạo task, tài khoản, giao job, export |
 | `evaluate.py` | phần chấm (chạy riêng được: `python evaluate.py --help`) |
 | `schema/labels_v1.2.json` | labels CVAT theo Guideline V1.2 (`readable` mặc định `__undefined__` để buộc chọn) |
