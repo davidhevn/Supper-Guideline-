@@ -1,0 +1,31 @@
+{
+  "_comment": "File mau Ground Truth - Thay the bang file JSON that cua du an",
+  "annotations": [
+    {
+      "id": 1,
+      "label": "prohibitory",
+      "bbox": [120, 80, 220, 180],
+      "case_type": "general",
+      "attributes": {
+        "readable": "yes",
+        "sign_class": "speed_limit_50",
+        "occluded": false,
+        "truncated": false,
+        "relevant_to_ego": true
+      }
+    },
+    {
+      "id": 2,
+      "label": "other",
+      "bbox": [300, 100, 380, 170],
+      "case_type": "occlusion",
+      "attributes": {
+        "readable": "yes",
+        "sign_class": "stop",
+        "occluded": true,
+        "truncated": false,
+        "relevant_to_ego": true
+      }
+    }
+  ]
+}

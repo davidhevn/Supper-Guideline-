@@ -1,53 +1,68 @@
-# Python
+# =============================================================
+# VECTORNET QA/QC PROJECT — .gitignore
+# =============================================================
+
+# --- Python ---
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.Python
 *.egg
 *.egg-info/
 dist/
 build/
-*.env
-.env
+venv/
+.venv/
 
-# Waymo Dataset (file to lon, khong push len GitHub)
+# --- Environment (TUYET DOI KHONG PUSH KEY) ---
+.env
+*.env
+
+# =============================================================
+# DATA — Khong push du lieu len GitHub
+# Luu tru tren Google Drive / NAS / S3 rieng
+# =============================================================
+
+# Raw images (dung luong lon)
+data/raw/
+!data/raw/README.md
+
+# Ground Truth (BAO MAT - khong public)
+data/ground_truth/*.json
+!data/ground_truth/README.md
+!data/ground_truth/gt_sample_001.json
+
+# Bai nop cua labeler (du lieu ca nhan)
+data/user_submissions/*/
+!data/user_submissions/README.md
+!data/user_submissions/labeler_A/submission_scene_001.json
+
+# Bao cao QA tu dong sinh ra
+data/qa_reports/*.json
+!data/qa_reports/README.md
+
+# =============================================================
+# WAYMO DATASET — File nang
+# =============================================================
 waymo_mini_dataset/
 *.tfrecord
 *.tfrecord-*
 
-# Frontend nested git (chi push source code, khong push .git cua frontend)
+# =============================================================
+# FRONTEND
+# =============================================================
 frontend/.git/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
-
-# Data output (sinh tu backend, khong push)
 frontend/public/frontend_data.json
 
-# OS
+# =============================================================
+# OS & EDITORS
+# =============================================================
 .DS_Store
 Thumbs.db
-*.egg
-*.egg-info/
-dist/
-build/
-*.env
-.env
-
-# Waymo Dataset (file to lon, khong push len GitHub)
-waymo_mini_dataset/
-*.tfrecord
-*.tfrecord-*
-
-# Frontend
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-
-# Data output (sinh tu backend, khong push)
-frontend/public/frontend_data.json
-
-# OS
-.DS_Store
-Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
