@@ -1,4 +1,5 @@
 import json
+import xml.etree.ElementTree as ET
 
 # =====================================================================
 # CVAT QA/QC Adapter - Traffic Sign Labeling
@@ -245,18 +246,89 @@ def rule6_attribute_format(user_attrs):
 
 
 # =====================================================================
-# MAIN EVALUATION ENGINE
+# MAIN EVALUATION ENGINE & PARSERS
 # =====================================================================
 
-def evaluate_annotations(user_json_str, gt_json_str):
+def parse_coco_json(json_str):
+    """Parse COCO JSON hoac Internal Mock JSON."""
+    try:
+        data = json.loads(json_str)
+        # Dinh dang Mock noi bo
+        if "annotations" in data and "categories" not in data:
+            return data["annotations"]
+            
+        # Dinh dang COCO JSON chuan (export tu CVAT)
+        annotations = []
+        if "categories" in data and "annotations" in data:
+            cat_map = {c["id"]: c["name"] for c in data["categories"]}
+            for ann in data["annotations"]:
+                # COCO bbox la [x, y, width, height]
+                x, y, w, h = ann.get("bbox", [0,0,0,0])
+                bbox = [x, y, x + w, y + h]
+                label = cat_map.get(ann.get("category_id"), "unknown")
+                attributes = ann.get("attributes", {})
+                
+                annotations.append({
+                    "id": ann.get("id"),
+                    "label": label,
+                    "bbox": bbox,
+                    "attributes": attributes
+                })
+            return annotations
+    except Exception as e:
+        print(f"Error parsing JSON: {e}")
+    return []
+
+def parse_cvat_xml(xml_str):
+    """Parse CVAT for images 1.1 (XML)."""
+    annotations = []
+    try:
+        root = ET.fromstring(xml_str)
+        for image in root.findall('image'):
+            for box in image.findall('box'):
+                label = box.get('label', 'unknown')
+                x_min = float(box.get('xtl', 0))
+                y_min = float(box.get('ytl', 0))
+                x_max = float(box.get('xbr', 0))
+                y_max = float(box.get('ybr', 0))
+                
+                attributes = {}
+                for attr in box.findall('attribute'):
+                    name = attr.get('name')
+                    value = attr.text
+                    if value and value.lower() == 'true':
+                        value = True
+                    elif value and value.lower() == 'false':
+                        value = False
+                    attributes[name] = value
+                
+                annotations.append({
+                    "id": int(box.get('id', len(annotations) + 1)),
+                    "label": label,
+                    "bbox": [x_min, y_min, x_max, y_max],
+                    "attributes": attributes
+                })
+    except Exception as e:
+        print(f"Error parsing XML: {e}")
+    return annotations
+
+def parse_annotations(content_str):
+    """Tu dong nhan dien format va parse thanh Unified Object."""
+    content_str = content_str.strip()
+    if content_str.startswith('<'):
+        return parse_cvat_xml(content_str)
+    elif content_str.startswith('{') or content_str.startswith('['):
+        return parse_coco_json(content_str)
+    return []
+
+def evaluate_annotations(user_content_str, gt_content_str):
     """
     Ham danh gia chinh: Ap dung toan bo 6 Rules len User Annotations.
+    Ho tro ca format CVAT XML va COCO JSON.
     """
-    user_data = json.loads(user_json_str)
-    gt_data = json.loads(gt_json_str)
-
-    gt_list = gt_data.get("annotations", [])
-    user_list = user_data.get("annotations", [])
+    gt_list = parse_annotations(gt_content_str)
+    user_list = parse_annotations(user_content_str)
+    
     user_map = {item["id"]: item for item in user_list}
     all_gt_boxes = [obj["bbox"] for obj in gt_list]
 
