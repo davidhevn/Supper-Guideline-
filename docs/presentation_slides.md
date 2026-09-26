@@ -20,9 +20,15 @@
 ## Slide 1: Title & Giới thiệu
 * **Tiêu đề:** Automated CVAT QA/QC Gatekeeper & Traffic Sign Guideline
 * **Phụ đề:** Chốt chặn tự động hóa dữ liệu gán nhãn xe tự lái & Chuẩn hóa Guideline V2
-* **Người trình bày:** DavidHE & Team
+* **Người trình bày:** Hoàng Võ Minh Tuấn (DavidHE) & Nhóm sinh viên thực hiện:
+  1. Hoàng Võ Minh Tuấn (MSV: 2A202602166)
+  2. Dương Văn Long (MSV: 2A202602156)
+  3. Nguyễn Thành Đạt (MSV: 2A202602151)
+  4. Nguyễn Đại Hoàng (MSV: 2A202602208)
+  5. Hoàng Việt Anh (MSV: 2A202602204)
+  6. Mạc Phú Phong (MSV: 2A202602236)
 * 🎙️ **Lời thoại gợi ý:**
-  > *"Kính chào thầy và các bạn! Hôm nay em xin đại diện nhóm trình bày về **Automated CVAT QA/QC Gatekeeper** — công cụ tự động hóa kiểm soát chất lượng dữ liệu dán nhãn cho xe tự lái, cùng quá trình thử nghiệm thực tế với bài nộp của annotator để nâng cấp bộ quy chuẩn Guideline từ V1 lên V2."*
+  > *"Kính chào thầy và các bạn! Hôm nay em xin đại diện nhóm gồm 6 thành viên trình bày về **Automated CVAT QA/QC Gatekeeper** — công cụ tự động hóa kiểm soát chất lượng dữ liệu dán nhãn cho xe tự lái, cùng quá trình thử nghiệm thực tế với bài nộp của annotator để nâng cấp bộ quy chuẩn Guideline từ V1 lên V2."*
 
 ---
 

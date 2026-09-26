@@ -7,6 +7,19 @@ Trong quá trình huấn luyện các mô hình dự đoán quỹ đạo xe tự
 
 ---
 
+## 👥 Thành viên tham gia dự án (Contributors)
+
+| STT | Họ và Tên | Mã sinh viên |
+| :---: | :--- | :---: |
+| 1 | Hoàng Võ Minh Tuấn | 2A202602166 |
+| 2 | Dương Văn Long | 2A202602156 |
+| 3 | Nguyễn Thành Đạt | 2A202602151 |
+| 4 | Nguyễn Đại Hoàng | 2A202602208 |
+| 5 | Hoàng Việt Anh | 2A202602204 |
+| 6 | Mạc Phú Phong | 2A202602236 |
+
+---
+
 ## 🗂️ Cấu trúc thư mục
 
 ```
