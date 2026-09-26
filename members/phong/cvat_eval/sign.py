@@ -4,7 +4,7 @@
     python sign.py install                      # tạo .venv + cài thư viện (1 lần)
     python sign.py selftest                     # tự kiểm, không cần CVAT
     python sign.py init                         # khai báo CVAT (URL, tài khoản admin) → .env
-    python sign.py use --images data/images/X --gt data/gt/Y.xml   # đổi sang data + GT của bạn
+    python sign.py use --name bo2 --gt ../../../data/ground_truth/gt_bo2.json   # đổi bộ data/GT
     python sign.py show                         # đang dùng data/GT/schema nào
     python sign.py setup an binh                # GOLD + tài khoản/task cho từng người
     python sign.py list                         # task nào giao cho ai
@@ -221,10 +221,10 @@ def cmd_evaluate(args) -> None:
     exports = HERE / "exports" / name
     out = HERE / "reports" / name
     shutil.rmtree(exports, ignore_errors=True)
-    cvat_env.cmd_collect(argparse.Namespace(name=name, out=exports, hint=False))
+    cvat_env.cmd_collect(argparse.Namespace(name=name, out=exports))
     preds = sorted(x for x in exports.glob("*.zip") if x.name != "gold.zip")
     if not preds:
-        sys.exit(f"Chưa có task người gán nào (chạy: python sign.py setup <tên>)")
+        sys.exit("Chưa có task người gán nào (chạy: python sign.py setup <tên>)")
     argv = ["--gt", str(exports / "gold.zip"), "--pred", *map(str, preds), "--labels", str(p["labels"]),
             "--out", str(out)]
     if p.get("eval_config"):
@@ -249,13 +249,11 @@ def write_group_reports(repo: Path, name: str, exports: Path, out: Path) -> None
             (sub / f"submission_{name}.xml").write_bytes(zf.read("annotations.xml"))
         details = []
         for r in rs:
-            if r["status"] in ("in_ignore", "out_of_scope"):
-                continue
             errors = [] if r["status"] == "correct" else [
                 {"rule": s, "status": "FAIL", "severity": r["severity"], "detail": r["detail"]}
                 for s in r["status"].split("+")]
             details.append({"sample_id": r["sample_id"], "gt": r["gt"], "user": r["pred"],
-                            "iou": r["geo_score"], "status": "PASS" if not errors else "FAIL", "errors": errors})
+                            "iou": r["iou"], "status": "PASS" if not errors else "FAIL", "errors": errors})
         gt_rows = [d for d in details if d["gt"]]
         passed = sum(d["status"] == "PASS" for d in gt_rows)
         score = round(100.0 * passed / len(gt_rows), 1) if gt_rows else 0.0

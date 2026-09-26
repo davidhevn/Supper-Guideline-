@@ -2,7 +2,6 @@
   "_ghi_chu": "GT tham chiếu GTSDB chỉ có box + family + class → không chấm readable/occluded/truncated/relevant_to_ego",
   "iou_match": 0.5,
   "iou_good": 0.7,
-  "escalate_attrs": [],
   "unknown_values": [
     "unknown",
     "uncertain"

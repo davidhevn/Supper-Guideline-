@@ -4,7 +4,7 @@ Công cụ cá nhân nằm trong repo nhóm, **không sửa file nào của nhó
 
 | Của nhóm | cvat_eval dùng thế nào |
 |---|---|
-| `LABELING_GUIDELINE_V1.md` (V1.2) | dán thẳng vào nút **Guide** của mọi task CVAT — nhóm sửa guideline thì chạy `setup --replace` để dán lại |
+| `guideline/LABELING_GUIDELINE_V1.md` (V1.2) | dán thẳng vào nút **Guide** của mọi task CVAT — nhóm sửa guideline thì chạy `setup --replace` để dán lại |
 | 4 label `prohibitory/mandatory/danger/other` + 5 attribute | `schema/labels_v1.2.json` |
 | `IOU_THRESHOLD = 0.7`, Rule 3 so `sign_class/occluded/truncated/readable` | `schema/eval_v1.2.json`: box IoU < 0.7 → `geometry_loose`, so đúng 4 attribute đó |
 | `data/raw/` (ảnh), `data/ground_truth/` (GT, gitignore) | **mặc định** đọc ảnh và GT ở đây (`project.json`) |
@@ -12,7 +12,7 @@ Công cụ cá nhân nằm trong repo nhóm, **không sửa file nào của nhó
 | Định dạng GT CVAT XML / COCO JSON | đọc cả hai (GT nhóm dạng COCO: `data/ground_truth/*.json`) |
 | Quy định **không push GT** | GT nằm trong `data/ground_truth/*.json` (đã bị `.gitignore` của nhóm chặn); chia sẻ riêng bằng `pack` |
 
-Khác `cvat_parser.py`: tool này ghép box người gán ↔ GT **theo vị trí (IoU) trên từng ảnh**, không theo `id`, nên đọc
+Khác `backend/cvat_parser.py`: tool này ghép box người gán ↔ GT **theo vị trí (IoU) trên từng ảnh**, không theo `id`, nên đọc
 được export CVAT thật (nhiều ảnh, id hai bên khác nhau). Nó cũng dựng luôn task/tài khoản trên CVAT, vẽ ảnh
 overlay, và liệt kê **ứng viên edge case mới**.
 
@@ -25,7 +25,7 @@ Windows gõ `py`, macOS/Linux gõ `python3` thay cho `python`. Cần Python ≥ 
 git clone https://github.com/davidhevn/Supper-Guideline-.git
 cd Supper-Guideline-/members/phong/cvat_eval
 # GT không có trên git: giải nén zip GT nhận qua Drive tại GỐC repo (xem "Dữ liệu")
-python sign.py install          # 1 lần: tạo .venv, cài cvat-sdk 2.74.1 + numpy + Pillow
+python sign.py install          # 1 lần: tạo .venv, cài cvat-sdk 2.74.1 + Pillow
 python sign.py selftest         # tự kiểm, không cần CVAT
 python sign.py init             # URL CVAT + tài khoản admin → .env (không bao giờ lên git)
 python sign.py show             # đang dùng data/GT/schema nào
@@ -54,7 +54,7 @@ nhận **giải nén tại gốc repo** (file rơi đúng vào `data/ground_trut
 
 ### Thêm ảnh + GT mới
 
-1. Ảnh vào `data/raw/` của nhóm (hoặc thư mục riêng, vd `members/phong/cvat_eval/data/images/<bộ>/` — đã gitignore).
+1. Ảnh vào `data/raw/` của nhóm.
 2. GT (CVAT 1.1 `.xml`/`.zip` hoặc COCO `.json`) vào `data/ground_truth/`. **Đặt đuôi `.json`** thì gitignore của
    nhóm tự chặn; file `.xml` ở đó **không** bị chặn — cẩn thận khi commit. Chưa có GT: `--gt ""` → GOLD tạo trống,
    tự gán trên CVAT.

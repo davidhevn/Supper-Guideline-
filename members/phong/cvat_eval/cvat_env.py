@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
-"""Dựng môi trường CVAT cho vòng "người ngoài gán nhãn → chấm theo GT".
+"""Phần CVAT của cvat_eval: kết nối, tạo task (GOLD / người gán), tạo tài khoản, giao job, export.
 
-Mỗi task dùng cùng một labels JSON + guideline + bộ ảnh. Gold (GT) và bài của từng annotator nằm ở các task
-RIÊNG, annotator chỉ được giao job của mình nên không mở được task gold.
+Không chạy trực tiếp — gọi qua `python sign.py ...`. Đăng nhập đọc CVAT_URL / CVAT_ADMIN_USER / CVAT_ADMIN_PASSWORD
+từ .env cạnh file này (tạo bằng `python sign.py init`).
 
-    PY=.venv/bin/python        # Windows: .venv\Scripts\python.exe — thường dùng qua sign.py
-    $PY cvat_env.py check
-    $PY cvat_env.py gold      --name nhom1 --labels L.json --guideline G.md --images build/blind
-    $PY cvat_env.py annotator --name nhom1 --user an --password 'Mk@12345' --labels L.json --guideline G.md --images build/blind
-    $PY cvat_env.py export    --task 42 --out exports/an.zip
-    $PY cvat_env.py collect   --name nhom1 --out exports/        # export gold + mọi task annotator của nhóm
-    $PY cvat_env.py list      [--name nhom1]
-
-Đăng nhập: đọc CVAT_URL / CVAT_ADMIN_USER / CVAT_ADMIN_PASSWORD từ .env cạnh file này (tạo bằng `python sign.py init`).
+GOLD và bài của từng người nằm ở các task RIÊNG; người gán chỉ được giao job của mình nên không mở được GOLD.
 """
 
 from __future__ import annotations
 
-import argparse
 import os
-import sys
-import time
 from pathlib import Path
 from typing import List, Optional
 
@@ -58,7 +47,7 @@ def connect():
 def images_in(folder: Path) -> List[Path]:
     files = sorted(p for p in folder.iterdir() if p.suffix.lower() in IMAGE_EXT)
     if not files:
-        raise SystemExit(f"Không có ảnh trong {folder} (chạy `make pack SPLIT=blind` trong guideline-challenge/)")
+        raise SystemExit(f"Không có ảnh trong {folder} (kiểm `images` trong project.json)")
     return files
 
 
@@ -162,26 +151,6 @@ def cmd_check(args) -> None:
     print(f"✓ CVAT {about.version} tại {url} · đăng nhập {me.username} (superuser={me.is_superuser})")
 
 
-def cmd_gold(args) -> None:
-    client, url = connect()
-    task = create_task(client, f"{args.name}-GOLD", args.labels, args.images, args.guideline, args.replace, args.gt, args.gt_format)
-    print(f"→ Owner gán GT ở {url}/tasks/{task.id} rồi chạy: cvat_env.py collect --name {args.name}")
-
-
-def cmd_annotator(args) -> None:
-    client, url = connect()
-    user = ensure_user(client, url, args.user, args.password, args.email)
-    task = create_task(client, f"{args.name}-{args.user}", args.labels, args.images, args.guideline, args.replace)
-    jobs = assign(client, task, user)
-    print(f"→ Gửi cho {args.user}: mở {url} · đăng nhập '{args.user}' · vào Jobs → "
-          + ", ".join(f"{url}/tasks/{task.id}/jobs/{j}" for j in jobs))
-
-
-def cmd_export(args) -> None:
-    client, _ = connect()
-    export(client, args.task, args.out)
-
-
 def cmd_collect(args) -> None:
     client, _ = connect()
     tasks = [t for t in client.tasks.list() if t.name.startswith(f"{args.name}-")]
@@ -190,9 +159,6 @@ def cmd_collect(args) -> None:
     for t in sorted(tasks, key=lambda t: t.id):
         suffix = t.name[len(args.name) + 1:]
         export(client, t.id, args.out / f"{'gold' if suffix == 'GOLD' else suffix}.zip")
-    if getattr(args, "hint", True):
-        print(f"→ evaluate.py --gt {args.out / 'gold.zip'} --pred "
-              + " ".join(str(args.out / f"{t.name[len(args.name) + 1:]}.zip") for t in tasks if not t.name.endswith("-GOLD")))
 
 
 def cmd_list(args) -> None:
@@ -205,42 +171,3 @@ def cmd_list(args) -> None:
             f"job {j.id} {j.stage}/{j.state} → {j.assignee.username if j.assignee else '(chưa giao)'}" for j in jobs
             if str(j.type) == "annotation")
         print(f"#{t.id:<4} {t.name:<32} {t.size} ảnh · {info}")
-
-
-def main(argv: Optional[List[str]] = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("check", help="kiểm kết nối + tài khoản")
-
-    def task_args(p):
-        p.add_argument("--name", required=True, help="tiền tố task, ví dụ tên nhóm")
-        p.add_argument("--labels", required=True, type=Path, help="03_cvat_labels.json")
-        p.add_argument("--images", required=True, type=Path, help="thư mục ảnh (vd build/blind)")
-        p.add_argument("--guideline", type=Path, help="02_guideline.md → dán vào Guide của task")
-        p.add_argument("--replace", action="store_true", help="xoá task cùng tên rồi tạo lại")
-
-    g = sub.add_parser("gold", help="tạo task <name>-GOLD để owner gán GT")
-    task_args(g)
-    g.add_argument("--gt", type=Path, help="(tuỳ chọn) nạp sẵn GT có trước")
-    g.add_argument("--gt-format", default="CVAT 1.1", help='định dạng file --gt, vd "COCO 1.0" (mặc định CVAT 1.1)')
-    a = sub.add_parser("annotator", help="tạo tài khoản + task <name>-<user> và giao job")
-    task_args(a)
-    a.add_argument("--user", required=True)
-    a.add_argument("--password", help="bắt buộc nếu tài khoản chưa có (≥ 8 ký tự, có chữ hoa + số)")
-    a.add_argument("--email")
-    e = sub.add_parser("export", help="export 1 task ra CVAT for images 1.1 (không kèm ảnh)")
-    e.add_argument("--task", required=True, type=int)
-    e.add_argument("--out", required=True, type=Path)
-    c = sub.add_parser("collect", help="export task GOLD + mọi task annotator của nhóm")
-    c.add_argument("--name", required=True)
-    c.add_argument("--out", type=Path, default=Path("exports"))
-    ls = sub.add_parser("list", help="liệt kê task + người được giao")
-    ls.add_argument("--name")
-    args = ap.parse_args(argv)
-    {"check": cmd_check, "gold": cmd_gold, "annotator": cmd_annotator, "export": cmd_export,
-     "collect": cmd_collect, "list": cmd_list}[args.cmd](args)
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

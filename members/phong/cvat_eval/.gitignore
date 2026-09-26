@@ -1,6 +1,3 @@
-# Dữ liệu + GT: repo public, quy định nhóm là KHÔNG push (lưu Drive). Chỉ giữ README.
-data/**
-!data/README.md
 # Bí mật / sinh ra khi chạy
 .env
 .venv/
