@@ -457,71 +457,48 @@ def evaluate_annotations(user_content_str, gt_content_str):
 # MOCK TEST — V1.2 (Test cac bay Rule 4, 5, 6)
 # =====================================================================
 if __name__ == "__main__":
-    ground_truth = json.dumps({
-        "annotations": [
-            {  # Test Rule 5: Stop phai la 'other' khong phai 'prohibitory'
-                "id": 1, "label": "other", "bbox": [120, 80, 180, 140],
-                "case_type": "general",
-                "attributes": {"readable": "yes", "sign_class": "stop",
-                               "occluded": False, "truncated": False, "relevant_to_ego": True}
-            },
-            {  # Test Rule 4: 2 bien nay se bi gom lai boi User
-                "id": 2, "label": "prohibitory", "bbox": [300, 100, 380, 180],
-                "case_type": "cluster",
-                "attributes": {"readable": "yes", "sign_class": "speed_limit_50",
-                               "occluded": False, "truncated": False, "relevant_to_ego": True}
-            },
-            {
-                "id": 3, "label": "other", "bbox": [300, 185, 380, 230],
-                "case_type": "cluster",
-                "attributes": {"readable": "yes", "sign_class": "supplementary_distance",
-                               "occluded": False, "truncated": False, "relevant_to_ego": False}
-            },
-            {  # Test Rule 6: readable sai dinh dang
-                "id": 4, "label": "danger", "bbox": [500, 100, 580, 180],
-                "case_type": "general",
-                "attributes": {"readable": "yes", "sign_class": "priority_next_intersection",
-                               "occluded": False, "truncated": False, "relevant_to_ego": True}
-            },
-        ]
-    })
-
-    user_label = json.dumps({
-        "annotations": [
-            {  # Rule 5 TRAP: Chon sai label prohibitory cho bien stop
-                "id": 1, "label": "prohibitory",
-                "bbox": [122, 82, 178, 138],
-                "attributes": {"readable": "yes", "sign_class": "stop",
-                               "occluded": False, "truncated": False, "relevant_to_ego": True}
-            },
-            {  # Rule 4: Gom ca 2 bien (id=2 va id=3) vao 1 box to
-                "id": 2, "label": "prohibitory",
-                "bbox": [295, 95, 385, 235],
-                "attributes": {"readable": "yes", "sign_class": "speed_limit_50",
-                               "occluded": False, "truncated": False, "relevant_to_ego": True}
-            },
-            {  # id=3 bi bo sot (vi da gop vao id=2)
-            },
-            {  # Rule 6: readable dien sai (dung "clear" thay vi yes/no/uncertain)
-                "id": 4, "label": "danger",
-                "bbox": [502, 102, 578, 178],
-                "attributes": {"readable": "clear",  # <-- SAI DINH DANG
-                               "sign_class": "priority_next_intersection",
-                               "occluded": False, "truncated": False, "relevant_to_ego": True}
-            },
-        ]
-    })
-
-    # Loc bo None
-    user_parsed = json.loads(user_label)
-    user_parsed["annotations"] = [a for a in user_parsed["annotations"] if a]
-    user_label = json.dumps(user_parsed)
+    import argparse
+    parser = argparse.ArgumentParser(description="CVAT QA/QC Evaluation Engine")
+    parser.add_argument("--gt", type=str, help="Path to Ground Truth JSON/XML file")
+    parser.add_argument("--sub", type=str, help="Path to Labeler Submission JSON/XML file")
+    
+    args = parser.parse_args()
+    
+    if args.gt and args.sub:
+        with open(args.gt, 'r', encoding='utf-8') as f:
+            gt_content = f.read()
+        with open(args.sub, 'r', encoding='utf-8') as f:
+            sub_content = f.read()
+    else:
+        # Fallback to Mock Data if no args provided
+        gt_content = json.dumps({
+            "annotations": [
+                {  "id": 1, "label": "other", "bbox": [120, 80, 180, 140], "case_type": "general",
+                   "attributes": {"readable": "yes", "sign_class": "stop", "occluded": False, "truncated": False, "relevant_to_ego": True}},
+                {  "id": 2, "label": "prohibitory", "bbox": [300, 100, 380, 180], "case_type": "cluster",
+                   "attributes": {"readable": "yes", "sign_class": "speed_limit_50", "occluded": False, "truncated": False, "relevant_to_ego": True}},
+                {  "id": 3, "label": "other", "bbox": [300, 185, 380, 230], "case_type": "cluster",
+                   "attributes": {"readable": "yes", "sign_class": "supplementary_distance", "occluded": False, "truncated": False, "relevant_to_ego": False}},
+                {  "id": 4, "label": "danger", "bbox": [500, 100, 580, 180], "case_type": "general",
+                   "attributes": {"readable": "yes", "sign_class": "priority_next_intersection", "occluded": False, "truncated": False, "relevant_to_ego": True}}
+            ]
+        })
+        sub_content = json.dumps({
+            "annotations": [
+                {  "id": 1, "label": "prohibitory", "bbox": [122, 82, 178, 138],
+                   "attributes": {"readable": "yes", "sign_class": "stop", "occluded": False, "truncated": False, "relevant_to_ego": True}},
+                {  "id": 2, "label": "prohibitory", "bbox": [295, 95, 385, 235],
+                   "attributes": {"readable": "yes", "sign_class": "speed_limit_50", "occluded": False, "truncated": False, "relevant_to_ego": True}},
+                {  "id": 4, "label": "danger", "bbox": [502, 102, 578, 178],
+                   "attributes": {"readable": "clear", "sign_class": "priority_next_intersection", "occluded": False, "truncated": False, "relevant_to_ego": True}}
+            ]
+        })
 
     print("=" * 68)
     print("  CVAT QA/QC — Guideline V1.2 | GTSDB Standard | 6 Rules")
     print("=" * 68)
 
-    report = evaluate_annotations(user_label, ground_truth)
+    report = evaluate_annotations(sub_content, gt_content)
     s = report["summary"]
     verdict_icon = "PASS" if s["verdict"] == "PASS" else "FAIL"
     print(f"\n[TONG KET] Diem: {s['score_percent']}% | Ket qua: {verdict_icon}")

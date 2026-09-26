@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sys
@@ -7,6 +7,7 @@ import os
 # Import các logic từ Phase 1, 2, 3
 from backend_pipeline import parse_tfrecord_to_json, rule_based_qa
 from ai_agent import generate_qa_report
+from cvat_parser import evaluate_annotations
 
 app = FastAPI(
     title="VectorNet QA/QC Pipeline API",
@@ -72,6 +73,20 @@ async def run_pipeline(req: RunRequest):
             
         return data_with_flags
         
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/qaqc/cvat")
+async def cvat_qaqc(gt_file: UploadFile = File(...), sub_file: UploadFile = File(...)):
+    try:
+        gt_content = await gt_file.read()
+        sub_content = await sub_file.read()
+        
+        gt_str = gt_content.decode('utf-8')
+        sub_str = sub_content.decode('utf-8')
+        
+        report = evaluate_annotations(sub_str, gt_str)
+        return report
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
