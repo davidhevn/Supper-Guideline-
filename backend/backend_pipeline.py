@@ -132,6 +132,7 @@ def rule_based_qa(scenario_data):
     min_y -= margin
     max_y += margin
     
+    has_map = len(map_features) > 0 and min_x != float('inf')
     sdc_idx = scenario_data.get("sdc_track_index", 0)
     
     # Giả lập hoặc kiểm tra thực tế
@@ -159,7 +160,7 @@ def rule_based_qa(scenario_data):
                 
                 # KIỂM TRA RULE 3: Map Boundary (chỉ áp dụng cho SDC)
                 # (Vì SDC index có thể nằm ngoài danh sách [:5] nên ta fallback check nếu track có id == sdc_track_index hoặc tạm check xe đầu tiên)
-                if i == sdc_idx or (i == 0 and sdc_idx >= len(scenario_data.get("tracks", []))):
+                if has_map and (i == sdc_idx or (i == 0 and sdc_idx >= len(scenario_data.get("tracks", [])))):
                     sx, sy = state.get("x", 0), state.get("y", 0)
                     if sx < min_x or sx > max_x or sy < min_y or sy > max_y:
                         if not any("Map Boundary" in err for err in errors):
