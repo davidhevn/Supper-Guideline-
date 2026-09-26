@@ -1,73 +1,62 @@
-# 📊 Kịch bản Thuyết trình: VectorNet QA/QC Pipeline
+# 🎯 Kịch bản Thuyết trình Pitching: Automated CVAT QA/QC Pipeline (5 Slides)
 
-**Slide 1: Tiêu đề**
-* **Tiêu đề lớn:** Tự động hóa Pipeline Kiểm duyệt Dữ liệu Xe Tự Lái
-* **Tiêu đề phụ:** Ứng dụng Rule-based & LLM Agent cho Mô hình VectorNet (Waymo Dataset)
-* **Người trình bày:** [Tên của bạn]
+> **Hướng dẫn:** File này được thiết kế theo chuẩn Pitching Demo. 5 Slide là con số hoàn hảo để trình bày nhanh, tập trung vào Nỗi đau (Problem) - Giải pháp (Solution) - Trực quan (Demo) - Chỉ số (Metrics) - Tương lai (Vision).
 
 ---
 
-**Slide 2: Nỗi đau của Kỹ sư AI (Pain Points)**
-* **Vấn đề:** Dữ liệu thô từ cảm biến (Lidar, Camera) luôn tiềm ẩn nhiễu (Noise).
-* **Các lỗi vật lý chết người:**
-  * Xe tự nhiên "dịch chuyển tức thời" (Missing frames / Bị đứt gãy tọa độ).
-  * Vận tốc phi vật lý (VD: Một chiếc xe chạy 350km/h trong thành phố).
-  * Xe văng ra khỏi giới hạn bản đồ (Out-of-bounds).
-* **Hậu quả:** Mô hình VectorNet học sai hành vi, gây ra tai nạn trong mô phỏng tự lái. Kiểm duyệt thủ công hàng ngàn kịch bản là điều bất khả thi!
+## Slide 1: The Problem (Nỗi đau của quy trình dán nhãn)
+* **Tiêu đề:** Nút thắt cổ chai trong quy trình Data Labeling.
+* **Nội dung trình bày:**
+  * Thu thập dữ liệu thì nhanh, nhưng dán nhãn (Labeling) và kiểm duyệt (QA/QC) lại tốn 80% thời gian của dự án AI.
+  * **Các lỗi sai "kinh điển" của Labeler (Human Errors):**
+    1. Rơi vào **Bẫy Ánh xạ (Mapping Traps)**: Thấy biển STOP màu đỏ là gán ngay nhãn `prohibitory` (Cấm), trong khi chuẩn quốc tế GTSDB quy định nó phải là `other`.
+    2. **Gộp cụm sai quy tắc (Atomic Violation)**: Gom 2-3 biển báo vào chung 1 bounding box to đùng thay vì tách riêng.
+    3. **Quên thuộc tính (Attributes)**: Bỏ sót các thông tin sống còn cho xe tự lái như bị che khuất (`occluded`) hay bị cắt mép (`truncated`).
+  * **Hậu quả:** Model Computer Vision học sai, nhận diện kém. QA Lead kiệt sức vì phải review hàng ngàn ảnh bằng mắt thường.
 
 ---
 
-**Slide 3: Giải pháp của chúng tôi**
-* Xây dựng một **Chốt chặn tự động (Automated Gatekeeper)** End-to-End ngay trước bước Training.
-* **3 Màng lọc Dữ liệu:**
-  1. **Phase 1 (Data Extraction):** Giải nén file `.tfrecord`, tách riêng Bản đồ (HD Map) và Quỹ đạo xe (Agent Dynamics).
-  2. **Phase 2 (Rule-based QA):** Lọc "cứng" bằng các thuật toán kiểm tra vật lý.
-  3. **Phase 3 (AI Agent):** Lọc "mềm" bằng LLM (Gemini) để phân tích lỗi và ra quyết định PASS/FAIL thông minh.
+## Slide 2: The Solution (Giải pháp của chúng tôi)
+* **Tiêu đề:** Automated CVAT QA/QC Gatekeeper
+* **Nội dung trình bày:**
+  * Chúng tôi xây dựng một **Chốt chặn tự động (Gatekeeper)** thay thế hoàn toàn sức người trong khâu chấm điểm.
+  * **Cơ chế hoạt động (The 6-Rules Engine):**
+    * **Rule 1 (IoU):** Phát hiện box vẽ bị thụt hoặc quá rộng so với chuẩn.
+    * **Rule 2 & 5 (Semantic Logic):** Phát hiện sai nhãn và đặc biệt là hệ thống từ điển phát hiện "Bẫy Ánh xạ" (vd: User cố tình gán STOP thành Cấm -> Phạt ngay).
+    * **Rule 3 & 6 (Attributes):** Kiểm tra tính toàn vẹn của dữ liệu (điền đủ, điền đúng định dạng).
+    * **Rule 4 (Atomic Check):** Thuật toán chống gộp cụm trái phép.
 
 ---
 
-**Slide 4: Kiến trúc Hệ thống (Architecture)**
-* *(Gợi ý: Hãy chèn một sơ đồ flow-chart đơn giản ở slide này)*
-* **Backend Core:** Python + FastAPI (Xử lý mượt mà dữ liệu lớn, Parse TFRecord cực nhanh).
-* **AI Brain:** Google Gemini API (gemini-1.5-flash).
-* **Frontend Dashboard:** Next.js + TailwindCSS + Canvas API (Hiển thị thời gian thực quỹ đạo xe và bản đồ).
-* **Data Flow:** UI ➡️ POST Request ➡️ Parse Data ➡️ Rule QA ➡️ LLM Agent ➡️ Trả JSON tổng hợp ➡️ Render báo cáo và Đổi màu Xanh/Đỏ trên Dashboard.
+## Slide 3: Live Demo & Architecture (Sản phẩm thực tế)
+* **Tiêu đề:** Từ CVAT đến Báo cáo tự động chỉ trong 1 giây.
+* **Nội dung trình bày (kết hợp show Demo):**
+  * *(Mở màn hình Terminal hoặc UI lên)*
+  * **Kiến trúc luồng (Flow):** 
+    1. Labeler làm việc trên CVAT -> Xuất file COCO JSON / XML.
+    2. QA Lead chuẩn bị 1 file Ground Truth (đáp án chuẩn) cắm sẵn vào hệ thống.
+    3. Đẩy file của Labeler qua API.
+  * **Thực hành Demo:** Chúng ta cùng xem hệ thống "bắt tại trận" 1 bài nộp sai. 
+  * *(Chạy script)* -> Màn hình in ra lỗi đỏ chót: *Lỗi Rule 5 - Bẫy ánh xạ nhãn! Cảnh báo gộp cụm! Cảnh báo quên tích Occluded!*
+  * Mỗi lỗi đều đi kèm một **Hint (Gợi ý)** trích xuất thẳng từ *Guideline V1.2* để Labeler biết chỗ sửa.
 
 ---
 
-**Slide 5: Chốt chặn Rule-Based (Phase 2)**
-* Thuật toán kiểm tra giới hạn vật lý nghiêm ngặt:
-  * **Rule 1 (Missing Frames):** Quét cờ `valid` của Protobuf, bắt thóp các xe bị đứt gãy tọa độ giữa chừng.
-  * **Rule 2 (Kinematics Anomalies):** Cảnh báo ngay lập tức nếu $Vận tốc > 200 km/h$.
-  * **Rule 3 (Map Boundary):** Kiểm tra giới hạn Bounding box (cộng thêm 10m an toàn) để đảm bảo xe không bay khỏi bản đồ.
+## Slide 4: Metrics that Matter (Chỉ số đo lường)
+* **Tiêu đề:** Không chỉ tìm lỗi, chúng tôi đo lường chất lượng nhân sự.
+* **Nội dung trình bày:**
+  * Báo cáo đầu ra không chỉ có Pass/Fail, mà tự động tính toán các chỉ số khắt khe nhất để đánh giá Labeler:
+    * 🎯 **Attribute Completion Rate:** Đo mức độ cẩn thận của Labeler (họ có chịu điền đủ các checkbox/dropdown không?).
+    * 🎯 **Precision & Recall per class:** Biết chính xác Labeler đang yếu ở nhóm biển báo nào (vd: Thường xuyên bỏ sót biển Danger, hay nhận diện nhầm biển Mandatory).
+  * Từ các Data này, Project Manager dễ dàng quyết định thưởng/phạt hoặc training lại nhân sự.
 
 ---
 
-**Slide 6: Bộ não AI Agent (Phase 3)**
-* **Tại sao cần AI?** Thay vì viết hàng tá code `if-else` khô khan để in lỗi, hãy nhường việc đánh giá và ra quyết định cho AI.
-* **Input:** Bảng tóm tắt Scenario + Các cờ lỗi (`qa_flags`).
-* **Prompt Engineering:** Ép AI đóng vai Kỹ sư QA/QC Xe tự lái thâm niên.
-* **Output:** Báo cáo Markdown 3 phần chuyên nghiệp: Tổng quan (Overview), Phân tích Dị thường (Anomalies), Quyết định Chấp nhận hay Từ chối (Decision).
-
----
-
-**Slide 7: Showcase / Live Demo (Cảnh quan trọng nhất)**
-* *(Lúc này bạn sẽ bật Video Demo quay màn hình Dashboard)*
-* **Bước 1 (Dữ liệu hoàn hảo):** Bấm "Run QA/QC Pipeline (Normal)". Hệ thống mượt mà báo ✅ PASS màu Xanh. Các xe (chấm tròn) di chuyển đúng vạch kẻ đường (Canvas).
-* **Bước 2 (Highlight):** Bấm "Simulate Error (Tiêm lỗi)". Backend giả lập một xe phóng 350km/h và một xe đứt tọa độ.
-* **Kết quả:** Màn hình chớp ❌ FAIL màu Đỏ cực gắt. AI Agent viết báo cáo vạch trần chính xác 2 lỗi vừa tạo. Chặn đứng nguy cơ dữ liệu rác!
-
----
-
-**Slide 8: Tổng kết & Hướng phát triển Tương lai**
-* **Kết quả đạt được:** Hoàn thành MVP đáp ứng tiêu chuẩn tự động hóa của Data Pipeline hiện đại. Giải quyết được bài toán khó nhất trước khi train mô hình.
-* **Tương lai (Scale-up):**
-  * Hỗ trợ quét hàng loạt (Batch Processing) hàng ngàn file `.tfrecord` tự động trong đêm.
-  * Đưa visualization lên 3D (VD: WebGL, Three.js) thay vì 2D Canvas.
-  * **Auto-healing:** Dùng AI không chỉ để "mắng" mà còn để nội suy (interpolate), vá lỗi tự động cho các đoạn khung hình bị mất.
-
----
-
-**Slide 9: Lời cảm ơn & Q/A**
-* Cảm ơn Hội đồng đánh giá và các thầy cô đã lắng nghe phần trình bày.
-* Q/A: (Dành thời gian trả lời các câu hỏi từ ban giám khảo).
+## Slide 5: The Vision (Tương lai của dự án)
+* **Tiêu đề:** Mở rộng quy mô & Tích hợp AI (Next Steps).
+* **Nội dung trình bày:**
+  * MVP hiện tại đã xử lý trọn vẹn logic (Rule-based) cực kỳ chặt chẽ.
+  * **Giai đoạn tiếp theo (Phase 3 & 4):**
+    1. **Tích hợp LLM Agent (Gemini):** Truyền kết quả JSON này cho AI để AI viết nhận xét bằng ngôn ngữ tự nhiên, đóng vai "Thầy giáo" gửi email nhắc nhở Labeler một cách mềm mỏng.
+    2. **Đánh giá chéo (Cross-validation):** Nâng cấp lên Guideline V2/V3, phát đề ngẫu nhiên (chèn Golden Set) ẩn vào task của Labeler trên CVAT để chấm điểm ngầm.
+  * **Lời kết:** Cảm ơn mọi người đã lắng nghe! (Q&A)
