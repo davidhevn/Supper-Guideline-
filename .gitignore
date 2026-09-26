@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.env
+.env
+
+# Waymo Dataset (file to lon, khong push len GitHub)
+waymo_mini_dataset/
+*.tfrecord
+*.tfrecord-*
+
+# Frontend nested git (chi push source code, khong push .git cua frontend)
+frontend/.git/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Data output (sinh tu backend, khong push)
+frontend/public/frontend_data.json
+
+# OS
+.DS_Store
+Thumbs.db
+*.egg
+*.egg-info/
+dist/
+build/
+*.env
+.env
+
+# Waymo Dataset (file to lon, khong push len GitHub)
+waymo_mini_dataset/
+*.tfrecord
+*.tfrecord-*
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Data output (sinh tu backend, khong push)
+frontend/public/frontend_data.json
+
+# OS
+.DS_Store
+Thumbs.db
