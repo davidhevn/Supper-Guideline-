@@ -393,6 +393,52 @@ def evaluate_annotations(user_content_str, gt_content_str):
     total = pass_count + fail_count
     score = round((pass_count / total) * 100, 1) if total > 0 else 0
 
+    # 1. Attribute Completion Rate
+    total_attrs = len(user_list) * 5
+    filled_attrs = 0
+    for u_obj in user_list:
+        attrs = u_obj.get("attributes", {})
+        filled_attrs += 3 # occluded, truncated, relevant_to_ego are checkboxes (always bool)
+        sc = str(attrs.get("sign_class", "")).strip()
+        rd = str(attrs.get("readable", "")).strip().lower()
+        if sc: filled_attrs += 1
+        if rd in VALID_READABLE: filled_attrs += 1
+    
+    attr_completion_rate = round((filled_attrs / total_attrs) * 100, 1) if total_attrs > 0 else 0.0
+
+    # 2. Precision & Recall per class
+    metrics = {
+        "attribute_completion_rate": attr_completion_rate,
+        "precision_per_class": {},
+        "recall_per_class": {}
+    }
+    
+    gt_counts = {lbl: 0 for lbl in VALID_LABELS}
+    pred_counts = {lbl: 0 for lbl in VALID_LABELS}
+    tp_counts = {lbl: 0 for lbl in VALID_LABELS}
+    
+    for gt_obj in gt_list:
+        lbl = gt_obj.get("label", "")
+        if lbl in gt_counts:
+            gt_counts[lbl] += 1
+            
+    for u_obj in user_list:
+        lbl = u_obj.get("label", "")
+        if lbl in pred_counts:
+            pred_counts[lbl] += 1
+            
+    for result in all_results:
+        gt_lbl = result.get("gt_label", "")
+        user_lbl = result.get("user_label", "")
+        if gt_lbl == user_lbl and gt_lbl in VALID_LABELS:
+            tp_counts[gt_lbl] += 1
+            
+    for lbl in VALID_LABELS:
+        p = (tp_counts[lbl] / pred_counts[lbl] * 100) if pred_counts[lbl] > 0 else 0.0
+        r = (tp_counts[lbl] / gt_counts[lbl] * 100) if gt_counts[lbl] > 0 else 0.0
+        metrics["precision_per_class"][lbl] = round(p, 1)
+        metrics["recall_per_class"][lbl] = round(r, 1)
+
     return {
         "summary": {
             "total_objects": total,
@@ -401,6 +447,7 @@ def evaluate_annotations(user_content_str, gt_content_str):
             "score_percent": score,
             "verdict": "PASS" if score >= 80 else "FAIL"
         },
+        "metrics": metrics,
         "qa_flags": [r for r in all_results if r["status"] == "FAIL"],
         "details": all_results
     }
@@ -481,6 +528,12 @@ if __name__ == "__main__":
     print(f"  Dat chuan: {s['pass']}/{s['total_objects']}")
     print(f"  Loi      : {s['fail']}/{s['total_objects']}")
 
+    m = report["metrics"]
+    print(f"\n[METRICS]")
+    print(f"  Attribute Completion Rate: {m['attribute_completion_rate']}%")
+    print(f"  Precision (prohibitory): {m['precision_per_class'].get('prohibitory')}% | Recall: {m['recall_per_class'].get('prohibitory')}%")
+    print(f"  Precision (other):       {m['precision_per_class'].get('other')}% | Recall: {m['recall_per_class'].get('other')}%")
+    
     for flag in report["qa_flags"]:
         print(f"\n{'='*65}")
         print(f"  Object #{flag['id']} | GT Label: {flag.get('gt_label')} | FAIL")

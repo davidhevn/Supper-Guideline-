@@ -24,8 +24,10 @@ venv/
 # =============================================================
 
 # Raw images (dung luong lon)
-data/raw/
+data/raw/*
+!data/raw/
 !data/raw/README.md
+data/*.zip
 
 # Ground Truth (BAO MAT - khong public)
 data/ground_truth/*.json
