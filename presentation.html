@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <title>CVAT QA/QC Pipeline Pitching</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/black.min.css">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 { text-transform: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .highlight-red { color: #ff2c2d; font-weight: bold; }
+        .highlight-green { color: #17ff2e; font-weight: bold; }
+        .highlight-yellow { color: #ffeb3b; font-weight: bold; }
+        .box { border: 2px solid #555; padding: 15px; border-radius: 10px; background: rgba(0,0,0,0.5); }
+        .flex-container { display: flex; justify-content: space-around; align-items: stretch; gap: 20px;}
+        .col { flex: 1; padding: 10px; }
+        .image-container img { max-height: 350px; border-radius: 8px; border: 3px solid #fff; object-fit: contain; width: 100%;}
+        .metrics-table { width: 100%; border-collapse: collapse; font-size: 0.7em; }
+        .metrics-table th, .metrics-table td { border: 1px solid #777; padding: 10px; text-align: center; }
+        .metrics-table th { background: #333; }
+        code { color: #ffeb3b; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section data-background-gradient="linear-gradient(to bottom, #283048, #859398)">
+                <h1 style="font-size: 2.2em;">Automated CVAT QA/QC</h1>
+                <h3 style="color: #ddd;">Chốt Chặn Tự Động Hóa Dữ Liệu Xe Tự Lái</h3>
+                <p>Ứng dụng Rule-based Engine & LLM cho Traffic Signs</p>
+                <br>
+                <p><small>Người trình bày: Team AI</small></p>
+            </section>
+
+            <!-- Slide 1: Problem -->
+            <section>
+                <section>
+                    <h2>1. Nút thắt cổ chai: <span class="highlight-red">QA/QC Dữ liệu</span></h2>
+                    <p style="font-size: 0.8em; text-align: left;">Kiểm duyệt thủ công bằng mắt là "cơn ác mộng" của QA Lead. Labeler thường xuyên mắc 3 lỗi chí mạng:</p>
+                    <div class="flex-container">
+                        <div class="col box">
+                            <h4 class="highlight-yellow">Bẫy Ánh Xạ (Mapping)</h4>
+                            <p style="font-size: 0.6em;">Gán biển <strong>STOP</strong> thành <code>prohibitory</code> thay vì <code>other</code> theo chuẩn GTSDB.</p>
+                        </div>
+                        <div class="col box">
+                            <h4 class="highlight-yellow">Gộp cụm sai (Atomic)</h4>
+                            <p style="font-size: 0.6em;">Gom 2 biển báo vào chung 1 box to, làm nhiễu model.</p>
+                        </div>
+                        <div class="col box">
+                            <h4 class="highlight-yellow">Quên Thuộc tính</h4>
+                            <p style="font-size: 0.6em;">Bỏ sót checkbox sống còn như <code>occluded</code> (bị che khuất).</p>
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <h3>Dữ liệu thực tế bối cảnh phức tạp</h3>
+                    <div class="flex-container image-container">
+                        <div class="col">
+                            <img src="data/images/00054.png" alt="Scene 1">
+                            <p style="font-size: 0.5em;">Đèn pha chói, biển báo nguy hiểm dễ bị lẹm / mờ (Kiểm tra <code>readable</code>)</p>
+                        </div>
+                        <div class="col">
+                            <img src="data/images/00177.png" alt="Scene 2">
+                            <p style="font-size: 0.5em;">Biển cấm nhỏ ở xa (Rủi ro: Miss object hoặc IoU thấp)</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Slide 2: Solution -->
+            <section data-background-gradient="linear-gradient(to bottom, #141e30, #243b55)">
+                <h2>2. Giải pháp: <span class="highlight-green">6-Rules Engine Gatekeeper</span></h2>
+                <p style="font-size: 0.8em;">Thay thế sức người bằng hệ thống chấm điểm tự động 100%.</p>
+                <div style="font-size: 0.7em; text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                    <ul>
+                        <li><strong>Rule 1 (IoU Threshold):</strong> Chống vẽ box bị thụt / quá rộng so với Golden Set.</li>
+                        <li><strong>Rule 2 (Label Mismatch):</strong> Bắt lỗi sai nhãn phân loại (Cấm/Hiệu lệnh/Nguy hiểm).</li>
+                        <li><strong>Rule 3 & 6 (Attributes):</strong> Ép Labeler điền đủ 100% các trường <code>sign_class</code>, <code>occluded</code>.</li>
+                        <li><strong>Rule 4 (Atomic Check):</strong> Quét Bounding Box, cảnh báo nếu Box bao trùm ≥ 2 biển.</li>
+                        <li><strong class="highlight-red">Rule 5 (Family Mapping Trap):</strong> Từ điển AI tự động tóm cổ các ca "Bẫy ánh xạ" kinh điển (STOP, Give Way, No Entry).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 3: Live Demo -->
+            <section>
+                <h2>3. The Pipeline (Từ CVAT tới Báo cáo)</h2>
+                <p style="font-size: 0.7em;">1 giây chạy Script = 1 giờ soi bằng mắt.</p>
+                <pre><code class="bash" data-trim style="font-size: 0.8em;">
+$ python cvat_parser.py --gt data/ground_truth/gt_001.json --submission user_001.json
+                </code></pre>
+                <div style="text-align: left; font-size: 0.6em; background: #222; padding: 15px; border-left: 5px solid #ff2c2d;">
+                    <p class="highlight-red">[Rule 5 - Family Mapping Trap] FAIL</p>
+                    <p>BẪY ÁNH XẠ NHÃN! sign_class='stop' phải có label='other' nhưng User chọn 'prohibitory'.</p>
+                    <p style="color: #aaa;">💡 Hint: Guideline V1.2 - Phần 5.2 (Bảng Bẫy): Stop (GTSDB #14) thuộc nhóm 'other'. Đây là bẫy ánh xạ phổ biến nhất!</p>
+                </div>
+            </section>
+
+            <!-- Slide 4: Metrics -->
+            <section>
+                <h2>4. Data & <span class="highlight-yellow">Metrics</span></h2>
+                <p style="font-size: 0.7em;">Hệ thống tự động tính toán chất lượng nhân sự Labeler:</p>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th>Nhóm Biển (Class)</th>
+                            <th>Precision (Độ chính xác)</th>
+                            <th>Recall (Độ bao phủ)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Prohibitory (Cấm)</td>
+                            <td class="highlight-green">95.0%</td>
+                            <td class="highlight-green">98.2%</td>
+                        </tr>
+                        <tr>
+                            <td>Danger (Nguy hiểm)</td>
+                            <td class="highlight-yellow">75.5%</td>
+                            <td class="highlight-green">90.0%</td>
+                        </tr>
+                        <tr>
+                            <td>Other (Khác)</td>
+                            <td class="highlight-red">40.0%</td>
+                            <td class="highlight-red">50.0%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br>
+                <p style="font-size: 0.8em; background: #333; padding: 10px; border-radius: 8px;">
+                    🎯 <strong>Attribute Completion Rate:</strong> 93.3% <br>
+                    <span style="font-size: 0.7em; color: #ccc;">(Insight: Labeler có xu hướng lười tick ô `occluded` khi biển bị che)</span>
+                </p>
+            </section>
+
+            <!-- Slide 5: Vision -->
+            <section data-background-gradient="linear-gradient(to top, #232526, #414345)">
+                <h2>5. Next Steps & <span class="highlight-green">Vision</span></h2>
+                <div class="flex-container">
+                    <div class="col box">
+                        <h4>🤖 LLM Agent Integration</h4>
+                        <p style="font-size: 0.7em;">Nhúng Gemini AI đọc JSON Report, tự động viết email nhắc nhở Labeler bằng ngôn ngữ tự nhiên mềm mỏng.</p>
+                    </div>
+                    <div class="col box">
+                        <h4>🕵️‍♂️ Cross-Validation V2</h4>
+                        <p style="font-size: 0.7em;">Trộn lẫn "Golden Set" (Câu hỏi bẫy có đáp án) ẩn vào trong Task CVAT của Labeler để chấm điểm ngầm định kỳ.</p>
+                    </div>
+                </div>
+                <h3 style="margin-top: 40px;" class="highlight-green">Thank You! Q&A</h3>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            slideNumber: true,
+            controls: true,
+            progress: true
+        });
+    </script>
+</body>
+</html>
