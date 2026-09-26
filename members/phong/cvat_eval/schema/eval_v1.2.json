@@ -1,0 +1,25 @@
+{
+  "_ghi_chu": "GT tự làm theo Guideline V1.2: so label + readable/sign_class/occluded/truncated (Rule 3 của nhóm); iou_good 0.7 = IOU_THRESHOLD của cvat_parser.py",
+  "iou_match": 0.5,
+  "iou_good": 0.7,
+  "escalate_attrs": [],
+  "unknown_values": [
+    "unknown",
+    "uncertain"
+  ],
+  "normalize_text": true,
+  "small_area_ratio": 0.0006,
+  "ignore_attrs": [
+    "relevant_to_ego"
+  ],
+  "severity": {
+    "missing": "major",
+    "extra": "minor",
+    "wrong_label": "critical",
+    "attr:sign_class": "major",
+    "wrong_attr": "minor",
+    "unassigned_attr": "major",
+    "annotator_unknown": "question",
+    "geometry_loose": "minor"
+  }
+}

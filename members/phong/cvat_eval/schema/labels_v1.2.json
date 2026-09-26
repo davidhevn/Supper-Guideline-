@@ -1,0 +1,222 @@
+[
+  {
+    "name": "prohibitory",
+    "color": "#ff3b30",
+    "type": "rectangle",
+    "attributes": [
+      {
+        "name": "readable",
+        "mutable": false,
+        "input_type": "select",
+        "default_value": "__undefined__",
+        "values": [
+          "__undefined__",
+          "yes",
+          "no",
+          "uncertain"
+        ]
+      },
+      {
+        "name": "sign_class",
+        "mutable": false,
+        "input_type": "text",
+        "default_value": "",
+        "values": [
+          ""
+        ]
+      },
+      {
+        "name": "occluded",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "truncated",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "relevant_to_ego",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "mandatory",
+    "color": "#007aff",
+    "type": "rectangle",
+    "attributes": [
+      {
+        "name": "readable",
+        "mutable": false,
+        "input_type": "select",
+        "default_value": "__undefined__",
+        "values": [
+          "__undefined__",
+          "yes",
+          "no",
+          "uncertain"
+        ]
+      },
+      {
+        "name": "sign_class",
+        "mutable": false,
+        "input_type": "text",
+        "default_value": "",
+        "values": [
+          ""
+        ]
+      },
+      {
+        "name": "occluded",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "truncated",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "relevant_to_ego",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "danger",
+    "color": "#ffcc00",
+    "type": "rectangle",
+    "attributes": [
+      {
+        "name": "readable",
+        "mutable": false,
+        "input_type": "select",
+        "default_value": "__undefined__",
+        "values": [
+          "__undefined__",
+          "yes",
+          "no",
+          "uncertain"
+        ]
+      },
+      {
+        "name": "sign_class",
+        "mutable": false,
+        "input_type": "text",
+        "default_value": "",
+        "values": [
+          ""
+        ]
+      },
+      {
+        "name": "occluded",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "truncated",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "relevant_to_ego",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "other",
+    "color": "#a05aff",
+    "type": "rectangle",
+    "attributes": [
+      {
+        "name": "readable",
+        "mutable": false,
+        "input_type": "select",
+        "default_value": "__undefined__",
+        "values": [
+          "__undefined__",
+          "yes",
+          "no",
+          "uncertain"
+        ]
+      },
+      {
+        "name": "sign_class",
+        "mutable": false,
+        "input_type": "text",
+        "default_value": "",
+        "values": [
+          ""
+        ]
+      },
+      {
+        "name": "occluded",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "truncated",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      },
+      {
+        "name": "relevant_to_ego",
+        "mutable": false,
+        "input_type": "checkbox",
+        "default_value": "false",
+        "values": [
+          "false"
+        ]
+      }
+    ]
+  }
+]
