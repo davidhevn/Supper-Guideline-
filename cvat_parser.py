@@ -260,16 +260,20 @@ def parse_coco_json(json_str):
         # Dinh dang COCO JSON chuan (export tu CVAT)
         annotations = []
         if "categories" in data and "annotations" in data:
-            cat_map = {c["id"]: c["name"] for c in data["categories"]}
+            cat_map = {c["id"]: c["name"] for c in data.get("categories", [])}
+            img_map = {img["id"]: img["file_name"] for img in data.get("images", [])}
+            
             for ann in data["annotations"]:
                 # COCO bbox la [x, y, width, height]
                 x, y, w, h = ann.get("bbox", [0,0,0,0])
                 bbox = [x, y, x + w, y + h]
                 label = cat_map.get(ann.get("category_id"), "unknown")
                 attributes = ann.get("attributes", {})
+                image_name = img_map.get(ann.get("image_id"), "unknown_image")
                 
                 annotations.append({
                     "id": ann.get("id"),
+                    "image_name": image_name,
                     "label": label,
                     "bbox": bbox,
                     "attributes": attributes
@@ -329,35 +333,77 @@ def evaluate_annotations(user_content_str, gt_content_str):
     gt_list = parse_annotations(gt_content_str)
     user_list = parse_annotations(user_content_str)
     
-    user_map = {item["id"]: item for item in user_list}
-    all_gt_boxes = [obj["bbox"] for obj in gt_list]
+    def calculate_iou(box1, box2):
+        x_min_inter = max(box1[0], box2[0])
+        y_min_inter = max(box1[1], box2[1])
+        x_max_inter = min(box1[2], box2[2])
+        y_max_inter = min(box1[3], box2[3])
+
+        if x_min_inter >= x_max_inter or y_min_inter >= y_max_inter:
+            return 0.0
+
+        inter_area = (x_max_inter - x_min_inter) * (y_max_inter - y_min_inter)
+        area1 = (box1[2] - box1[0]) * (box1[3] - box1[1])
+        area2 = (box2[2] - box2[0]) * (box2[3] - box2[1])
+        union_area = area1 + area2 - inter_area
+        return inter_area / union_area if union_area > 0 else 0.0
+
+    # Gom nhom theo image_name
+    user_by_image = {}
+    for u in user_list:
+        img = u.get("image_name", "unknown_image")
+        if img not in user_by_image:
+            user_by_image[img] = []
+        user_by_image[img].append(u)
+
+    gt_by_image = {}
+    for g in gt_list:
+        img = g.get("image_name", "unknown_image")
+        if img not in gt_by_image:
+            gt_by_image[img] = []
+        gt_by_image[img].append(g)
 
     all_results = []
     pass_count = 0
     fail_count = 0
 
     for gt_obj in gt_list:
-        obj_id = gt_obj["id"]
+        obj_id = gt_obj.get("id", "GT")
+        image_name = gt_obj.get("image_name", "unknown_image")
         gt_box = gt_obj["bbox"]
         gt_label = gt_obj["label"]
         gt_attrs = gt_obj.get("attributes", {})
         case_type = gt_obj.get("case_type", "general")
+        all_gt_boxes = [g["bbox"] for g in gt_by_image.get(image_name, gt_list)]
 
         obj_errors = []
-        user_obj = user_map.get(obj_id)
+        
+        # Tim box User co IoU cao nhat trong cung 1 anh
+        user_candidates = user_by_image.get(image_name, [])
+        best_user_obj = None
+        best_iou = 0.0
+        
+        for cand in user_candidates:
+            iou = calculate_iou(cand["bbox"], gt_box)
+            if iou > best_iou:
+                best_iou = iou
+                best_user_obj = cand
 
-        if not user_obj:
+        # Neu khong co user box nao co IoU > 0.0, coi nhu bi thieu object
+        if not best_user_obj or best_iou == 0.0:
             fail_count += 1
             all_results.append({
-                "id": obj_id, "gt_label": gt_label, "status": "FAIL",
+                "id": f"{obj_id} (Missing)", "gt_label": gt_label, "status": "FAIL",
                 "errors": [{
                     "rule": "Missing Object",
                     "status": "FAIL",
-                    "detail": "Bo sot: Khong tim thay annotation nay.",
+                    "detail": "Bo sot: Khong tim thay annotation nay hoac ve lech hoan toan khoi muc tieu.",
                     "hint": "Guideline V1.2 - Phan 5.4: Bien > 15x15px deu phai dan nhan."
                 }]
             })
             continue
+
+        user_obj = best_user_obj
 
         user_box = user_obj["bbox"]
         user_label = user_obj.get("label", "")
