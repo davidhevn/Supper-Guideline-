@@ -93,7 +93,7 @@ Khi thuyết trình, hãy mở Dashboard tại `http://localhost:3000` và thự
 
 ## 🚦 Traffic Sign — Chấm bài gán nhãn CVAT
 
-* Guideline: [`guideline/LABELING_GUIDELINE_V1.md`](guideline/LABELING_GUIDELINE_V1.md) · tiến độ: [`docs/CVAT_QAQC_TRACKER.md`](docs/CVAT_QAQC_TRACKER.md)
+* Guideline: [`guideline/LABELING_GUIDELINE_V1.md`](guideline/LABELING_GUIDELINE_V1.md) · chỗ còn mơ hồ: [`guideline/ISSUE_GUIDELINE.md`](guideline/ISSUE_GUIDELINE.md) · tiến độ: [`docs/CVAT_QAQC_TRACKER.md`](docs/CVAT_QAQC_TRACKER.md)
 * Chấm mẫu 6 rules: `python backend/cvat_parser.py`
 * Dựng task CVAT cho người gán + chấm theo GT trên nhiều ảnh: [`members/phong/cvat_eval`](members/phong/cvat_eval/README.md)
 * Kiểm thử backend: `cd backend && python -m unittest test_backend_pipeline`
