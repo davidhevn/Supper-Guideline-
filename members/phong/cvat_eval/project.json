@@ -5,7 +5,7 @@
   "gt": "../../../data/ground_truth/gt_gtsdb_raw.json",
   "gt_format": "COCO 1.0",
   "labels": "schema/labels_v1.2.json",
-  "guide": "../../../LABELING_GUIDELINE_V1.md",
+  "guide": "../../../guideline/LABELING_GUIDELINE_V1.md",
   "eval_config": "schema/eval_reference.json",
   "group_repo": "../../.."
 }

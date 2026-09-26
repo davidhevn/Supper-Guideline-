@@ -78,4 +78,6 @@ async def run_pipeline(req: RunRequest):
 if __name__ == "__main__":
     import uvicorn
     # Khởi chạy server FastAPI tại http://localhost:8000
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # app_dir: chạy được cả khi gọi từ gốc repo (python backend/main.py)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True,
+                app_dir=os.path.dirname(os.path.abspath(__file__)))
