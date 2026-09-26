@@ -25,7 +25,7 @@ Thư mục này chứa các file báo cáo được sinh ra tự động bởi `
 
 ```bash
 # Chay danh gia cho tung labeler
-python cvat_parser.py \
+python backend/cvat_parser.py \
   --gt data/ground_truth/gt_scene_001.json \
   --submission data/user_submissions/labeler_A/submission_scene_001.json \
   --output data/qa_reports/report_labeler_A_scene_001.json

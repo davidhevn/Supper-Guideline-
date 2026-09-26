@@ -5,7 +5,7 @@
 ## Phase 0: Tài liệu & Guideline
 - [x] **Guideline V1.0 (Draft):** Soạn thảo Guideline dán nhãn Traffic Sign với 5 Edge Cases và bảng nhãn chuẩn.
 - [x] **Guideline V1.1:** Cập nhật 4 Labels chính + 5 Attributes.
-- [x] **Guideline V1.2:** Chuẩn hóa theo GTSDB. Bổ sung **Bẫy Ánh xạ** (5.2), Exclusion (5.3), Quy tắc Atomic (5.1), `readable` thêm giá trị `uncertain`. Xem tại: `LABELING_GUIDELINE_V1.md`
+- [x] **Guideline V1.2:** Chuẩn hóa theo GTSDB. Bổ sung **Bẫy Ánh xạ** (5.2), Exclusion (5.3), Quy tắc Atomic (5.1), `readable` thêm giá trị `uncertain`. Xem tại: `guideline/LABELING_GUIDELINE_V1.md`
 
 ## Phase 1: CVAT Data Adapter (Python)
 - [x] **Viết Adapter Parser:** Xử lý file export JSON từ CVAT, trích xuất cấu trúc dữ liệu của User Label và Ground Truth.

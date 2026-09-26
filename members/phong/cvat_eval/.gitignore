@@ -1,0 +1,7 @@
+# Bí mật / sinh ra khi chạy
+.env
+.venv/
+exports/
+reports/
+dist/
+__pycache__/

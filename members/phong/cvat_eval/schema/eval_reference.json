@@ -1,0 +1,27 @@
+{
+  "_ghi_chu": "GT tham chiếu GTSDB chỉ có box + family + class → không chấm readable/occluded/truncated/relevant_to_ego",
+  "iou_match": 0.5,
+  "iou_good": 0.7,
+  "unknown_values": [
+    "unknown",
+    "uncertain"
+  ],
+  "normalize_text": true,
+  "small_area_ratio": 0.0006,
+  "ignore_attrs": [
+    "readable",
+    "occluded",
+    "truncated",
+    "relevant_to_ego"
+  ],
+  "severity": {
+    "missing": "major",
+    "extra": "minor",
+    "wrong_label": "critical",
+    "attr:sign_class": "major",
+    "wrong_attr": "minor",
+    "unassigned_attr": "major",
+    "annotator_unknown": "question",
+    "geometry_loose": "minor"
+  }
+}

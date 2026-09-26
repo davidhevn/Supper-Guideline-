@@ -1,6 +1,6 @@
 # 📂 guideline/sample_images — Ảnh minh họa cho Guideline
 
-Thư mục này chứa ảnh chụp màn hình (screenshots) từ CVAT dùng để minh họa cho các Case trong `LABELING_GUIDELINE_V1.md`.
+Thư mục này chứa ảnh chụp màn hình (screenshots) từ CVAT dùng để minh họa cho các Case trong `../LABELING_GUIDELINE_V1.md`.
 
 ## Danh sách ảnh cần có
 

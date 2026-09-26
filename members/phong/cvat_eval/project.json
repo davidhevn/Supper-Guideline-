@@ -1,0 +1,11 @@
+{
+  "_ghi_chu": "Đường dẫn tương đối so với thư mục này. Mặc định dùng data chung của nhóm (data/raw + data/ground_truth ở gốc repo). Đổi bằng `python sign.py use ...`.",
+  "name": "grp",
+  "images": "../../../data/raw",
+  "gt": "../../../data/ground_truth/gt_gtsdb_raw.json",
+  "gt_format": "COCO 1.0",
+  "labels": "schema/labels_v1.2.json",
+  "guide": "../../../guideline/LABELING_GUIDELINE_V1.md",
+  "eval_config": "schema/eval_reference.json",
+  "group_repo": "../../.."
+}
