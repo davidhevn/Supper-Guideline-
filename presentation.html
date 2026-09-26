@@ -2,154 +2,431 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8">
-    <title>CVAT QA/QC Pipeline Pitching</title>
+    <title>CVAT QA/QC Pipeline & Guideline V2 Pitching</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/black.min.css">
     <style>
-        .reveal h1, .reveal h2, .reveal h3 { text-transform: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .highlight-red { color: #ff2c2d; font-weight: bold; }
-        .highlight-green { color: #17ff2e; font-weight: bold; }
-        .highlight-yellow { color: #ffeb3b; font-weight: bold; }
-        .box { border: 2px solid #555; padding: 15px; border-radius: 10px; background: rgba(0,0,0,0.5); }
-        .flex-container { display: flex; justify-content: space-around; align-items: stretch; gap: 20px;}
-        .col { flex: 1; padding: 10px; }
-        .image-container img { max-height: 350px; border-radius: 8px; border: 3px solid #fff; object-fit: contain; width: 100%;}
-        .metrics-table { width: 100%; border-collapse: collapse; font-size: 0.7em; }
-        .metrics-table th, .metrics-table td { border: 1px solid #777; padding: 10px; text-align: center; }
-        .metrics-table th { background: #333; }
-        code { color: #ffeb3b; }
+        :root {
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --accent-yellow: #facc15;
+            --bg-card: rgba(30, 41, 59, 0.85);
+            --border-card: rgba(148, 163, 184, 0.25);
+        }
+
+        /* Tối ưu typography & layout */
+        .reveal {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #f1f5f9;
+        }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            text-transform: none;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .reveal h2 {
+            font-size: 1.6em;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+        
+        /* FIX QUAN TRỌNG: Cho phép cuộn nội dung mượt mà, không bao giờ bị cắt chữ phía trên/dưới */
+        .reveal .slides section {
+            height: 100% !important;
+            max-height: 100% !important;
+            top: 0 !important;
+            padding: 15px 25px !important;
+            box-sizing: border-box !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+        }
+
+        /* Thanh cuộn tinh tế hiện đại */
+        .reveal .slides section::-webkit-scrollbar {
+            width: 6px;
+        }
+        .reveal .slides section::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 4px;
+        }
+        .reveal .slides section::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 4px;
+        }
+        .reveal .slides section::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+
+        .highlight-red { color: var(--accent-red); font-weight: bold; }
+        .highlight-green { color: var(--accent-green); font-weight: bold; }
+        .highlight-yellow { color: var(--accent-yellow); font-weight: bold; }
+        .highlight-blue { color: var(--accent-blue); font-weight: bold; }
+        
+        /* Component Box */
+        .box {
+            border: 1px solid var(--border-card);
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 12px;
+            width: 100%;
+        }
+        .col { flex: 1; }
+        
+        /* Ảnh minh họa vừa vặn, không đẩy tràn khung */
+        .image-container img {
+            max-height: 130px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            object-fit: contain;
+            width: 100%;
+            background: #020617;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Bảng Metrics cô đọng */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.62em;
+            margin-top: 6px;
+        }
+        .metrics-table th, .metrics-table td {
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 6px 10px;
+            text-align: center;
+        }
+        .metrics-table th {
+            background: rgba(30, 58, 138, 0.6);
+            color: #93c5fd;
+            font-weight: 600;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.68em;
+            font-weight: 600;
+        }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .badge-green { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .badge-blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+        code { color: #fef08a; background: rgba(255,255,255,0.12); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+        
+        ul.custom-list { list-style: none; padding-left: 0; margin: 4px 0; }
+        ul.custom-list li { margin-bottom: 6px; font-size: 0.65em; text-align: left; }
+        ul.custom-list li::before { content: "🔹 "; }
     </style>
 </head>
 <body>
     <div class="reveal">
         <div class="slides">
 
-            <!-- Title Slide -->
-            <section data-background-gradient="linear-gradient(to bottom, #283048, #859398)">
-                <h1 style="font-size: 2.2em;">Automated CVAT QA/QC</h1>
-                <h3 style="color: #ddd;">Chốt Chặn Tự Động Hóa Dữ Liệu Xe Tự Lái</h3>
-                <p>Ứng dụng Rule-based Engine & LLM cho Traffic Signs</p>
-                <br>
-                <p><small>Người trình bày: Team AI</small></p>
-            </section>
-
-            <!-- Slide 1: Problem -->
-            <section>
-                <section>
-                    <h2>1. Nút thắt cổ chai: <span class="highlight-red">QA/QC Dữ liệu</span></h2>
-                    <p style="font-size: 0.8em; text-align: left;">Kiểm duyệt thủ công bằng mắt là "cơn ác mộng" của QA Lead. Labeler thường xuyên mắc 3 lỗi chí mạng:</p>
-                    <div class="flex-container">
-                        <div class="col box">
-                            <h4 class="highlight-yellow">Bẫy Ánh Xạ (Mapping)</h4>
-                            <p style="font-size: 0.6em;">Gán biển <strong>STOP</strong> thành <code>prohibitory</code> thay vì <code>other</code> theo chuẩn GTSDB.</p>
-                        </div>
-                        <div class="col box">
-                            <h4 class="highlight-yellow">Gộp cụm sai (Atomic)</h4>
-                            <p style="font-size: 0.6em;">Gom 2 biển báo vào chung 1 box to, làm nhiễu model.</p>
-                        </div>
-                        <div class="col box">
-                            <h4 class="highlight-yellow">Quên Thuộc tính</h4>
-                            <p style="font-size: 0.6em;">Bỏ sót checkbox sống còn như <code>occluded</code> (bị che khuất).</p>
-                        </div>
+            <!-- ========================================== -->
+            <!-- SLIDE 1: TITLE SLIDE                       -->
+            <!-- ========================================== -->
+            <section data-background-gradient="linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)" style="justify-content: center !important; text-align: center;">
+                <div style="margin: auto 0;">
+                    <span class="badge badge-blue">🚀 Autonomous Driving · CVAT QA/QC Pipeline</span>
+                    <h1 style="font-size: 2.1em; margin-top: 15px; margin-bottom: 8px; color: #ffffff;">Automated CVAT QA/QC</h1>
+                    <h3 style="color: #93c5fd; font-size: 1.05em; font-weight: normal; margin-bottom: 15px;">
+                        Chốt Chặn Kiểm Định Dữ Liệu Tự Động & Tiến Hóa Guideline V2
+                    </h3>
+                    <p style="font-size: 0.72em; color: #cbd5e1;">
+                        Ứng dụng <strong>6-Rules Engine</strong> · Thực nghiệm Bài nộp Annotator · Tối ưu Hóa Quy chuẩn
+                    </p>
+                    <div style="margin-top: 30px; font-size: 0.65em; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; display: inline-block;">
+                        <span>Người trình bày: <strong style="color: #ffffff;">DavidHE & Team QA/QC</strong></span>
+                        <span style="margin: 0 15px;">|</span>
+                        <span>Dự án: <em>VectorNet Traffic Sign Data Pipeline</em></span>
                     </div>
-                </section>
-                <section>
-                    <h3>Dữ liệu thực tế bối cảnh phức tạp</h3>
-                    <div class="flex-container image-container">
-                        <div class="col">
-                            <img src="data/images/00054.png" alt="Scene 1">
-                            <p style="font-size: 0.5em;">Đèn pha chói, biển báo nguy hiểm dễ bị lẹm / mờ (Kiểm tra <code>readable</code>)</p>
-                        </div>
-                        <div class="col">
-                            <img src="data/images/00177.png" alt="Scene 2">
-                            <p style="font-size: 0.5em;">Biển cấm nhỏ ở xa (Rủi ro: Miss object hoặc IoU thấp)</p>
-                        </div>
-                    </div>
-                </section>
-            </section>
-
-            <!-- Slide 2: Solution -->
-            <section data-background-gradient="linear-gradient(to bottom, #141e30, #243b55)">
-                <h2>2. Giải pháp: <span class="highlight-green">6-Rules Engine Gatekeeper</span></h2>
-                <p style="font-size: 0.8em;">Thay thế sức người bằng hệ thống chấm điểm tự động 100%.</p>
-                <div style="font-size: 0.7em; text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
-                    <ul>
-                        <li><strong>Rule 1 (IoU Threshold):</strong> Chống vẽ box bị thụt / quá rộng so với Golden Set.</li>
-                        <li><strong>Rule 2 (Label Mismatch):</strong> Bắt lỗi sai nhãn phân loại (Cấm/Hiệu lệnh/Nguy hiểm).</li>
-                        <li><strong>Rule 3 & 6 (Attributes):</strong> Ép Labeler điền đủ 100% các trường <code>sign_class</code>, <code>occluded</code>.</li>
-                        <li><strong>Rule 4 (Atomic Check):</strong> Quét Bounding Box, cảnh báo nếu Box bao trùm ≥ 2 biển.</li>
-                        <li><strong class="highlight-red">Rule 5 (Family Mapping Trap):</strong> Từ điển AI tự động tóm cổ các ca "Bẫy ánh xạ" kinh điển (STOP, Give Way, No Entry).</li>
-                    </ul>
                 </div>
             </section>
 
-            <!-- Slide 3: Live Demo -->
+            <!-- ========================================== -->
+            <!-- SLIDE 2: THE PROBLEM                       -->
+            <!-- ========================================== -->
             <section>
-                <h2>3. The Pipeline (Từ CVAT tới Báo cáo)</h2>
-                <p style="font-size: 0.7em;">1 giây chạy Script = 1 giờ soi bằng mắt.</p>
-                <pre><code class="bash" data-trim style="font-size: 0.8em;">
-$ python cvat_parser.py --gt data/ground_truth/gt_001.json --submission user_001.json
-                </code></pre>
-                <div style="text-align: left; font-size: 0.6em; background: #222; padding: 15px; border-left: 5px solid #ff2c2d;">
-                    <p class="highlight-red">[Rule 5 - Family Mapping Trap] FAIL</p>
-                    <p>BẪY ÁNH XẠ NHÃN! sign_class='stop' phải có label='other' nhưng User chọn 'prohibitory'.</p>
-                    <p style="color: #aaa;">💡 Hint: Guideline V1.2 - Phần 5.2 (Bảng Bẫy): Stop (GTSDB #14) thuộc nhóm 'other'. Đây là bẫy ánh xạ phổ biến nhất!</p>
-                </div>
-            </section>
-
-            <!-- Slide 4: Metrics -->
-            <section>
-                <h2>4. Data & <span class="highlight-yellow">Metrics</span></h2>
-                <p style="font-size: 0.7em;">Hệ thống tự động tính toán chất lượng nhân sự Labeler:</p>
-                <table class="metrics-table">
-                    <thead>
-                        <tr>
-                            <th>Nhóm Biển (Class)</th>
-                            <th>Precision (Độ chính xác)</th>
-                            <th>Recall (Độ bao phủ)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Prohibitory (Cấm)</td>
-                            <td class="highlight-green">95.0%</td>
-                            <td class="highlight-green">98.2%</td>
-                        </tr>
-                        <tr>
-                            <td>Danger (Nguy hiểm)</td>
-                            <td class="highlight-yellow">75.5%</td>
-                            <td class="highlight-green">90.0%</td>
-                        </tr>
-                        <tr>
-                            <td>Other (Khác)</td>
-                            <td class="highlight-red">40.0%</td>
-                            <td class="highlight-red">50.0%</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <br>
-                <p style="font-size: 0.8em; background: #333; padding: 10px; border-radius: 8px;">
-                    🎯 <strong>Attribute Completion Rate:</strong> 93.3% <br>
-                    <span style="font-size: 0.7em; color: #ccc;">(Insight: Labeler có xu hướng lười tick ô `occluded` khi biển bị che)</span>
+                <h2>1. Nỗi đau: <span class="highlight-red">Nút thắt cổ chai QA/QC</span></h2>
+                <p style="font-size: 0.65em; color: #94a3b8; margin-bottom: 12px; text-align: left;">
+                    Thu thập dữ liệu chỉ chiếm 20% thời gian, nhưng <strong>80% công sức và chi phí nằm ở khâu gán nhãn và kiểm duyệt</strong>. Soi mắt thủ công thường bỏ lọt 3 lỗi chí mạng:
                 </p>
-            </section>
-
-            <!-- Slide 5: Vision -->
-            <section data-background-gradient="linear-gradient(to top, #232526, #414345)">
-                <h2>5. Next Steps & <span class="highlight-green">Vision</span></h2>
+                
                 <div class="flex-container">
                     <div class="col box">
-                        <h4>🤖 LLM Agent Integration</h4>
-                        <p style="font-size: 0.7em;">Nhúng Gemini AI đọc JSON Report, tự động viết email nhắc nhở Labeler bằng ngôn ngữ tự nhiên mềm mỏng.</p>
+                        <div style="font-size: 1.6em; margin-bottom: 4px;">🛑</div>
+                        <h4 class="highlight-yellow" style="font-size: 0.78em; margin-bottom: 6px;">Bẫy Ánh Xạ (Mapping)</h4>
+                        <p style="font-size: 0.58em; color: #cbd5e1; text-align: left; line-height: 1.4;">
+                            Thấy biển hình tròn đỏ (STOP, No Entry) là gán ngay thành <code>prohibitory</code> (Cấm), trong khi chuẩn quốc tế GTSDB bắt buộc là <code>other</code>.
+                        </p>
                     </div>
                     <div class="col box">
-                        <h4>🕵️‍♂️ Cross-Validation V2</h4>
-                        <p style="font-size: 0.7em;">Trộn lẫn "Golden Set" (Câu hỏi bẫy có đáp án) ẩn vào trong Task CVAT của Labeler để chấm điểm ngầm định kỳ.</p>
+                        <div style="font-size: 1.6em; margin-bottom: 4px;">📐</div>
+                        <h4 class="highlight-yellow" style="font-size: 0.78em; margin-bottom: 6px;">Lệch BBox & Gộp Cụm</h4>
+                        <p style="font-size: 0.58em; color: #cbd5e1; text-align: left; line-height: 1.4;">
+                            Box bị thụt mất 50% diện tích hoặc gom 2-3 biển xếp chồng vào chung một box to (vi phạm nghiêm trọng nguyên tắc Atomic).
+                        </p>
+                    </div>
+                    <div class="col box">
+                        <div style="font-size: 1.6em; margin-bottom: 4px;">📝</div>
+                        <h4 class="highlight-yellow" style="font-size: 0.78em; margin-bottom: 6px;">Lỗi Thuộc Tính Im Lặng</h4>
+                        <p style="font-size: 0.58em; color: #cbd5e1; text-align: left; line-height: 1.4;">
+                            CVAT cho phép bỏ trống <code>sign_class</code> hoặc tự gán nhãn mặc định đầu tiên mà labeler không hề hay biết hay kiểm tra lại.
+                        </p>
                     </div>
                 </div>
-                <h3 style="margin-top: 40px;" class="highlight-green">Thank You! Q&A</h3>
+
+                <div class="box" style="margin-top: 10px; background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); text-align: left; padding: 8px 12px;">
+                    <p style="font-size: 0.58em; color: #fca5a5; margin: 0;">
+                        ⚠️ <strong>Hậu quả thực tế:</strong> Kiểm duyệt bằng mắt tốn 10–15 phút/ảnh nhưng vẫn sót lỗi. Đưa dữ liệu bẩn vào huấn luyện sẽ làm lệch pha mô hình AI xe tự lái, gây nguy cơ tai nạn nghiêm trọng.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SLIDE 3: THE 6-RULES ENGINE                -->
+            <!-- ========================================== -->
+            <section data-background-gradient="linear-gradient(135deg, #091e3a 0%, #172554 100%)">
+                <h2>2. Giải pháp: <span class="highlight-green">The 6-Rules Engine</span></h2>
+                <p style="font-size: 0.65em; color: #cbd5e1; margin-bottom: 12px; text-align: left;">
+                    Chuyển hóa 100% quy chuẩn nghiệp vụ thành luật toán học kiểm định tự động trong <strong>0.2 giây</strong>:
+                </p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="box" style="text-align: left;">
+                        <h4 style="font-size: 0.75em; color: #60a5fa; margin-bottom: 4px;">📏 Rule 1: Bounding Box (IoU ≥ 0.7)</h4>
+                        <p style="font-size: 0.55em; color: #e2e8f0; margin: 0;">
+                            Tính diện tích giao trên hợp pixel (IoU). Tự động cảnh báo box bị thụt (quá nhỏ) hoặc vẽ tràn viền.
+                        </p>
+                    </div>
+                    <div class="box" style="text-align: left;">
+                        <h4 style="font-size: 0.75em; color: #60a5fa; margin-bottom: 4px;">🏷️ Rule 2: Label Categorization</h4>
+                        <p style="font-size: 0.55em; color: #e2e8f0; margin: 0;">
+                            So khớp 4 nhóm nhãn chính: <code>prohibitory</code>, <code>danger</code>, <code>mandatory</code>, <code>other</code>.
+                        </p>
+                    </div>
+                    <div class="box" style="text-align: left;">
+                        <h4 style="font-size: 0.75em; color: #60a5fa; margin-bottom: 4px;">🧩 Rule 3 & 6: Attribute Validation</h4>
+                        <p style="font-size: 0.55em; color: #e2e8f0; margin: 0;">
+                            Bắt buộc có <code>sign_class</code>, chuẩn hóa <code>readable</code> (yes/no/uncertain), kiểm tra cờ <code>occluded</code>.
+                        </p>
+                    </div>
+                    <div class="box" style="text-align: left;">
+                        <h4 style="font-size: 0.75em; color: #60a5fa; margin-bottom: 4px;">📦 Rule 4: Atomic Check (Chống gộp cụm)</h4>
+                        <p style="font-size: 0.55em; color: #e2e8f0; margin: 0;">
+                            Quét tọa độ không gian; cảnh báo đỏ nếu 1 box của user bao trùm ≥ 2 biển của Ground Truth.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="box" style="margin-top: 10px; text-align: left; border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.15); padding: 8px 12px;">
+                    <h4 style="font-size: 0.75em; color: #f87171; margin-bottom: 3px;">🎯 Rule 5: Family Mapping Trap (Bẫy Ánh Xạ GTSDB)</h4>
+                    <p style="font-size: 0.55em; color: #fecaca; margin: 0; line-height: 1.35;">
+                        Từ điển thông minh tóm gọn các ca dễ nhầm: STOP (#14), Give Way (#13), No Entry (#17) ➔ buộc gán nhãn <strong>other</strong>, nếu chọn prohibitory/danger hệ thống sẽ phạt lỗi kèm trích dẫn nguyên văn Guideline.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SLIDE 4: CASE STUDY - ANNOTATOR DŨNG       -->
+            <!-- ========================================== -->
+            <section>
+                <h2>3. Case Thực Tế: <span class="highlight-yellow">Bài Nộp Annotator Dũng</span></h2>
+                <p style="font-size: 0.65em; color: #94a3b8; margin-bottom: 10px; text-align: left;">
+                    Kiểm định bài nộp thật của Annotator Nguyễn Hữu Dũng trên 3 ảnh Golden Set (12 đối tượng biển báo):
+                </p>
+
+                <div class="flex-container">
+                    <div class="col box" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; text-align: center; padding: 8px;">
+                        <p style="font-size: 0.58em; color: #fca5a5; text-transform: uppercase; margin: 0;">Điểm Tổng Kết</p>
+                        <p style="font-size: 2.2em; font-weight: bold; color: #f87171; margin: 2px 0;">0.0%</p>
+                        <span class="badge badge-red">❌ KẾT LUẬN: FAIL</span>
+                    </div>
+                    <div class="col box" style="text-align: center; padding: 8px;">
+                        <p style="font-size: 0.58em; color: #93c5fd; text-transform: uppercase; margin: 0;">Đạt Chuẩn (Pass)</p>
+                        <p style="font-size: 2.2em; font-weight: bold; color: #4ade80; margin: 2px 0;">0 <span style="font-size: 0.45em; color: #64748b;">/ 12</span></p>
+                        <span class="badge badge-green">0% Golden Fit</span>
+                    </div>
+                    <div class="col box" style="text-align: center; padding: 8px;">
+                        <p style="font-size: 0.58em; color: #fcd34d; text-transform: uppercase; margin: 0;">Vi Phạm (Fail)</p>
+                        <p style="font-size: 2.2em; font-weight: bold; color: #f87171; margin: 2px 0;">12 <span style="font-size: 0.45em; color: #64748b;">/ 12</span></p>
+                        <span class="badge badge-red">100% Cần Sửa</span>
+                    </div>
+                </div>
+
+                <div class="box" style="margin-top: 10px; padding: 10px 14px;">
+                    <h4 style="font-size: 0.72em; color: #38bdf8; text-align: left; margin: 0 0 4px 0;">📊 Bảng Phân Tích Kỹ Năng (Annotator Profile Metrics):</h4>
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Nhóm Nhãn (Class)</th>
+                                <th>Precision (Độ chuẩn xác)</th>
+                                <th>Recall (Độ bao phủ)</th>
+                                <th>Nhận Xét Kỹ Thuật Tự Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🔴 <strong>Prohibitory (Cấm)</strong></td>
+                                <td class="highlight-green">75.0%</td>
+                                <td class="highlight-green">100.0%</td>
+                                <td style="text-align: left;">Dán tất cả mọi biển thành Cấm (bao gồm cả STOP, Give Way & No Entry).</td>
+                            </tr>
+                            <tr>
+                                <td>⚪ <strong>Other (Khác)</strong></td>
+                                <td class="highlight-red">0.0%</td>
+                                <td class="highlight-red">0.0%</td>
+                                <td style="text-align: left;">Bỏ lọt hoàn toàn nhóm 'other' do dính Bẫy Ánh Xạ GTSDB.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size: 0.58em; text-align: left; margin-top: 6px; margin-bottom: 0; color: #cbd5e1;">
+                        🎯 <strong>Attribute Completion Rate: 80.0%</strong> (Annotator có tick các ô checkbox, nhưng <em>bỏ trống 100% trường sign_class</em>).
+                    </p>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SLIDE 5: ERROR DEEP-DIVE                   -->
+            <!-- ========================================== -->
+            <section>
+                <h2>4. Mổ Xẻ <span class="highlight-red">3 Lỗi Chí Mạng</span> Của Dũng</h2>
+                <p style="font-size: 0.62em; color: #94a3b8; margin-bottom: 10px; text-align: left;">
+                    Gatekeeper bắt trọn 3 lỗi điển hình phản ánh trực tiếp bất cập của công cụ và Guideline:
+                </p>
+
+                <div class="flex-container">
+                    <!-- Lỗi 1 -->
+                    <div class="col box" style="text-align: left;">
+                        <span class="badge badge-red">Lỗi 1 · Rule 5</span>
+                        <h4 style="font-size: 0.72em; margin: 6px 0; color: #fca5a5;">Dính Bẫy Ánh Xạ (STOP/No Entry)</h4>
+                        <div class="image-container" style="margin-bottom: 6px;">
+                            <img src="guideline/issue_images/G16_nhan_mac_dinh_prohibitory.png" alt="Trap 1">
+                        </div>
+                        <p style="font-size: 0.54em; color: #cbd5e1; margin: 0; line-height: 1.35;">
+                            Biển <strong>STOP (#14)</strong> & <strong>No Entry (#17)</strong> là hình tròn đỏ nên annotator chọn ngay <code>prohibitory</code>. Theo GTSDB bắt buộc là <code>other</code>!
+                        </p>
+                    </div>
+
+                    <!-- Lỗi 2 -->
+                    <div class="col box" style="text-align: left;">
+                        <span class="badge badge-red">Lỗi 2 · Rule 1</span>
+                        <h4 style="font-size: 0.72em; margin: 6px 0; color: #fca5a5;">Box Bị Thụt (IoU 0.25 < 0.7)</h4>
+                        <div class="image-container" style="margin-bottom: 6px;">
+                            <img src="guideline/issue_images/G01_00054_pedestrian_danger.png" alt="IoU Error">
+                        </div>
+                        <p style="font-size: 0.54em; color: #cbd5e1; margin: 0; line-height: 1.35;">
+                            Tại Object #2: Kích thước GT chuẩn là <code>71 x 22 px</code>, bài nộp chỉ vẽ <code>35 x 11 px</code> (thụt mất 50% kích thước thật). Gatekeeper phát hiện ngay!
+                        </p>
+                    </div>
+
+                    <!-- Lỗi 3 -->
+                    <div class="col box" style="text-align: left;">
+                        <span class="badge badge-red">Lỗi 3 · Rule 3 & 6</span>
+                        <h4 style="font-size: 0.72em; margin: 6px 0; color: #fca5a5;">Bỏ Trống 100% sign_class</h4>
+                        <div class="image-container" style="margin-bottom: 6px;">
+                            <img src="guideline/issue_images/G17_no_entry_that.png" alt="Missing Class">
+                        </div>
+                        <p style="font-size: 0.54em; color: #cbd5e1; margin: 0; line-height: 1.35;">
+                            Toàn bộ 12/12 object đều có <code>sign_class = ""</code> do CVAT để dạng text tự do, annotator không điền và công cụ không có validation bắt buộc!
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SLIDE 6: GUIDELINE V1 -> V2 EVOLUTION      -->
+            <!-- ========================================== -->
+            <section data-background-gradient="linear-gradient(135deg, #1e293b 0%, #0f172a 100%)">
+                <h2>5. Tiến Hóa: <span class="highlight-green">Guideline V1 ➔ V2</span></h2>
+                <p style="font-size: 0.65em; color: #94a3b8; margin-bottom: 10px; text-align: left;">
+                    Đúc kết 20 Issues thực tế từ bài làm của Annotator Dũng để nâng cấp tiêu chuẩn:
+                </p>
+
+                <div class="flex-container">
+                    <div class="col box" style="text-align: left; border-top: 3px solid #ef4444;">
+                        <h4 style="font-size: 0.75em; color: #f87171; margin-bottom: 6px;">⚠️ Bất cập ở Guideline V1:</h4>
+                        <ul class="custom-list" style="color: #cbd5e1;">
+                            <li><strong>Lỗi G-16:</strong> CVAT để nhãn mặc định là <code>prohibitory</code> ➔ Labeler lười đổi nhãn.</li>
+                            <li><strong>Lỗi G-04:</strong> <code>sign_class</code> gõ tay tự do ➔ Thường xuyên bị bỏ trống hoặc sai chính tả.</li>
+                            <li><strong>Lỗi G-20:</strong> Thiếu hình ảnh trực quan đối chiếu cho các ca bẫy (STOP, Give Way).</li>
+                            <li><strong>Lỗi G-06:</strong> Không quy định ngưỡng biển quá nhỏ (< 15px) hoặc quá mờ.</li>
+                        </ul>
+                    </div>
+
+                    <div class="col box" style="text-align: left; border-top: 3px solid #22c55e;">
+                        <h4 style="font-size: 0.75em; color: #4ade80; margin-bottom: 6px;">✅ Cải tiến đột phá ở Guideline V2:</h4>
+                        <ul class="custom-list" style="color: #cbd5e1;">
+                            <li><strong>Xóa nhãn mặc định:</strong> Ép labeler phải chủ động chọn danh mục từ menu ban đầu (Fix G-16).</li>
+                            <li><strong>Dropdown GTSDB:</strong> Chuyển <code>sign_class</code> thành danh mục chọn 43 mã chuẩn.</li>
+                            <li><strong>Bảng tra cứu hình mẫu:</strong> Đính kèm bảng ảnh mẫu 43 biển báo trực tiếp trong Guideline.</li>
+                            <li><strong>Ngưỡng phân giải:</strong> Quy định rõ biển < 15x15 px hoặc lẹm góc > 50% thì bỏ qua.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box" style="margin-top: 10px; text-align: left; background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3); padding: 8px 12px;">
+                    <p style="font-size: 0.58em; color: #bae6fd; margin: 0;">
+                        💡 <strong>Triết lý thiết kế Guideline V2:</strong> <em>"Một Guideline xuất sắc không phải là viết cho thật dài, mà là thiết kế sao cho Annotator KHÔNG THỂ LÀM SAI!"</em>
+                    </p>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SLIDE 7: VISION & LLM AGENT                -->
+            <!-- ========================================== -->
+            <section data-background-gradient="linear-gradient(135deg, #091e3a 0%, #1e1b4b 100%)">
+                <span class="badge badge-green" style="margin-bottom: 4px;">The Future Vision</span>
+                <h2>6. Tầm Nhìn & <span class="highlight-blue">Hệ Sinh Thái AI QA/QC</span></h2>
+                <p style="font-size: 0.65em; color: #94a3b8; margin-bottom: 12px; text-align: left;">
+                    Lộ trình tích hợp toàn diện từ Rule-based Engine tới Trí tuệ Nhân tạo:
+                </p>
+                
+                <div class="flex-container">
+                    <div class="col box" style="text-align: left;">
+                        <div style="font-size: 1.4em; margin-bottom: 3px;">🤖</div>
+                        <h4 style="font-size: 0.72em; color: #38bdf8; margin-bottom: 4px;">Gemini LLM Agent</h4>
+                        <p style="font-size: 0.55em; color: #cbd5e1; margin: 0; line-height: 1.35;">
+                            Tự động đọc JSON kết quả từ Gatekeeper, biên dịch các lỗi kỹ thuật khô khan thành báo cáo ngôn ngữ tự nhiên và gửi email đào tạo lại cho từng Labeler.
+                        </p>
+                    </div>
+                    <div class="col box" style="text-align: left;">
+                        <div style="font-size: 1.4em; margin-bottom: 3px;">🕵️‍♂️</div>
+                        <h4 style="font-size: 0.72em; color: #facc15; margin-bottom: 4px;">Hidden Golden Benchmark</h4>
+                        <p style="font-size: 0.55em; color: #cbd5e1; margin: 0; line-height: 1.35;">
+                            Tự động trộn ngầm 5–10% ảnh có đáp án chuẩn vào các batch dán nhãn thường trên CVAT để xếp hạng KPI nhân sự khách quan theo thời gian thực.
+                        </p>
+                    </div>
+                    <div class="col box" style="text-align: left;">
+                        <div style="font-size: 1.4em; margin-bottom: 3px;">🌐</div>
+                        <h4 style="font-size: 0.72em; color: #4ade80; margin-bottom: 4px;">Real-time Dashboard</h4>
+                        <p style="font-size: 0.55em; color: #cbd5e1; margin: 0; line-height: 1.35;">
+                            Bảng điều khiển Full-stack (FastAPI + Next.js) kết nối trực tiếp kho dữ liệu, cho phép kiểm duyệt hàng ngàn dataset chỉ với 1 cú click.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <h3 class="highlight-green" style="font-size: 1.2em; margin-bottom: 4px;">Xin Chân Thành Cảm Ơn!</h3>
+                    <p style="font-size: 0.65em; color: #94a3b8; margin: 0;">Q&A · Nhóm sẵn sàng lắng nghe câu hỏi từ Thầy và các bạn</p>
+                </div>
             </section>
 
         </div>
@@ -160,9 +437,16 @@ $ python cvat_parser.py --gt data/ground_truth/gt_001.json --submission user_001
         Reveal.initialize({
             hash: true,
             transition: 'slide',
-            slideNumber: true,
+            slideNumber: 'c/t',
             controls: true,
-            progress: true
+            progress: true,
+            center: false,           /* TẮT căn giữa dọc: giúp nội dung bắt đầu từ trên cùng, không bị che chữ ở trên */
+            width: 1200,             /* Khổ trình chiếu chuẩn HD rộng rãi */
+            height: 700,
+            margin: 0.04,
+            minScale: 0.2,
+            maxScale: 1.5,
+            mouseWheel: false        /* Để người dùng cuộn xem nội dung bên trong slide khi cần */
         });
     </script>
 </body>
