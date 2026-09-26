@@ -145,10 +145,16 @@ def test_coco_json_matches_cvat_xml(tmp_path):
             "categories": [{"id": 1, "name": "other"}],
             "annotations": [{"id": 1, "image_id": 1, "category_id": 1, "bbox": [200, 200, 43, 43],
                              "attributes": {"sign_class": "stop", "occluded": False}}]}
+    pred = json.loads(json.dumps(coco))
+    pred["annotations"][0]["attributes"]["rotation"] = 0.0          # CVAT COCO export tự thêm
+    pj = tmp_path / "pred.json"
+    pj.write_text(json.dumps(pred), encoding="utf-8")
     g = tmp_path / "gt.json"
     g.write_text(json.dumps(coco), encoding="utf-8")
     p = write(tmp_path, "p", img(0, "00177.png", box("other", 200, 200, 243, 243, sign_class="stop", occluded="false")))
     rows, _ = ev.compare(ev.parse_export(g), ev.parse_export(p), ev.load_config(None), [])
+    assert [r.status for r in rows] == ["correct"]
+    rows, _ = ev.compare(ev.parse_export(g), ev.parse_export(pj), ev.load_config(None), [])
     assert [r.status for r in rows] == ["correct"]
 
 

@@ -27,6 +27,7 @@ Mức độ theo hậu quả khi chấm tự động:
 | G-13 | 2 | Mô tả `danger` là "nền vàng" — biển Đức nền trắng | minor | open |
 | G-14 | 3, 6 | Không nói ảnh không có biển thì nộp gì | minor | open |
 | G-15 | đầu file, 7 | Tên file V1 nhưng nội dung V1.2; lịch sử không ghi lý do | minor | open |
+| G-16 | 3, 6 | Giá trị mặc định trong CVAT (label đầu tiên, `readable = yes`) tạo lỗi im lặng | major | open |
 
 ---
 
@@ -245,13 +246,49 @@ Tên file là `LABELING_GUIDELINE_V1.md` nhưng nội dung là V1.2. Mục 7 ghi
 do* thay đổi. Đề xuất: giữ tên file cố định (`LABELING_GUIDELINE.md`), phiên bản chỉ ghi trong nội dung. Mỗi dòng
 lịch sử thêm cột "Lý do / bằng chứng", ví dụ "G-01, ảnh 00054".
 
+## G-16 · Giá trị mặc định tạo lỗi im lặng — **major**
+
+**Nguyên văn:** mục 3 `readable … Bắt buộc chọn 1 trong 3. Không để trống.` và `sign_class … Bắt buộc điền.`
+
+**Vì sao khó:** trong CVAT, box mới tự nhận label đầu tiên trong danh sách (`prohibitory`) và giá trị mặc định của
+từng attribute. Nếu `readable` mặc định là `yes`, người gán quên chọn thì bài vẫn trông như "đã chọn". Checklist mục
+6 không bắt được lỗi này.
+
+**Dẫn chứng:** xem mục đối chiếu bên dưới. Cả 12 box đều là `prohibitory` + `readable = yes` + `sign_class` trống, kể
+cả biển STOP và các biển mờ, tối ở `00366.png`.
+
+**Đề xuất:**
+
+1. Trong labels JSON của CVAT, `readable` (và `sign_class` nếu chuyển sang select, xem G-04) để `__undefined__` đứng
+   đầu và làm mặc định. Khi đó còn sót `__undefined__` nghĩa là chưa chọn, và QA bắt được.
+2. Thêm vào checklist: *"Đã đổi label của từng box khỏi mặc định chưa?"*, và bật Attribute Annotation Mode ở lượt 2.
+
+---
+
+## Đối chiếu với bài gán thật đầu tiên (NguyenHuuDung, nhánh `Tuan`, commit `cc7844c`)
+
+Chấm bằng `members/phong/cvat_eval/evaluate.py`, GT là `data/ground_truth/gt_gtsdb_raw.json` (GT tham chiếu GTSDB,
+schema V1.2), cấu hình `schema/eval_v1.2.json`. Mục đích là **tìm chỗ guideline chưa rõ**, không phải đánh giá người
+gán: bài có thể chưa làm xong lượt gán attribute.
+
+| Quan sát | Số box | Issue liên quan |
+|---|---|---|
+| Vẽ biển chỉ đường / thông tin mà GT GTSDB không có: biển vàng `00054` (1016,461), biển chỉ đường lớn `00177` (771,297, 117×117), 2 biển xanh cao tốc `00366` (659,559 · 692,559) | 4 box thừa | **G-02** |
+| Mọi box đều là `prohibitory`; STOP (2 biển), nhường đường, đường ưu tiên bị gán `prohibitory` | 4 sai label (critical) | **G-16**, 5.2 |
+| `sign_class` trống ở cả 12 box, `readable = yes` ở cả 12 box (kể cả ảnh tối `00366`) | 12 | **G-04**, **G-07**, **G-16** |
+| Sót *keep right* 18×18 (`00177`), *keep right* 21×21, *tốc độ 20* 30×30, *đi bộ qua đường* 40×38 (`00054`) | 4 sót | **G-06** |
+| Biển 24 px ở `00366`: box của người gán 15–20 px (chỉ ôm phần mặt đọc được), IoU với GT 0.51–0.67, rớt ngưỡng 0.7 | 4 lệch | **G-10**, **G-11** |
+
+Kết quả: precision 66.7% · recall 66.7% · 0/16 đúng hoàn toàn. Phần lớn lỗi có thể quy về một issue ở trên. Vì vậy
+sửa guideline (G-02, G-04, G-10, G-16) sẽ có tác dụng hơn là yêu cầu người gán làm lại.
+
 ---
 
 ## Ưu tiên sửa
 
 1. **G-01, G-02, G-03**: sửa xong thì người gán làm đúng guideline mới không bị chấm sai oan.
-2. **G-04, G-07, G-09**: giảm việc mỗi người gõ và chọn một kiểu. Có thể làm cùng lúc với việc đổi schema CVAT sang
-   select.
+2. **G-04, G-07, G-09, G-16**: giảm việc mỗi người gõ và chọn một kiểu, và bỏ lỗi im lặng do giá trị mặc định. Có thể
+   làm cùng lúc với việc đổi schema CVAT sang select.
 3. Các issue còn lại: làm khi ra bản V1.3.
 
 Khi sửa xong một issue, đổi cột **Trạng thái** thành `fixed (V1.x)` và ghi số issue vào mục 7 của guideline.

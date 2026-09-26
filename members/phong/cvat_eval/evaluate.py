@@ -25,6 +25,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
 
 UNDEF = "__undefined__"
+CVAT_META_ATTRS = {"rotation", "track_id", "keyframe"}
 
 DEFAULT_CONFIG = {
     "iou_match": 0.5,         # IoU ≥ ngưỡng này thì coi là cùng một biển
@@ -94,7 +95,8 @@ def parse_coco(path: Path) -> Doc:
         doc.sizes[sample] = (int(im.get("width", 0)), int(im.get("height", 0)))
     for a in data.get("annotations", []):
         x, y, w, h = a["bbox"]
-        attrs = {k: _attr_str(v) for k, v in (a.get("attributes") or {}).items()}
+        # export COCO của CVAT tự thêm rotation/track_id/keyframe — không phải attribute của label
+        attrs = {k: _attr_str(v) for k, v in (a.get("attributes") or {}).items() if k not in CVAT_META_ATTRS}
         sample = by_id[a["image_id"]]
         doc.objects[sample].append(Obj(sample, cats.get(a["category_id"], "?"), (x, y, x + w, y + h), attrs))
     return doc
