@@ -76,14 +76,25 @@ async def run_pipeline(req: RunRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+import zipfile
+import io
+
 @app.post("/api/qaqc/cvat")
 async def cvat_qaqc(gt_file: UploadFile = File(...), sub_file: UploadFile = File(...)):
     try:
-        gt_content = await gt_file.read()
-        sub_content = await sub_file.read()
-        
-        gt_str = gt_content.decode('utf-8')
-        sub_str = sub_content.decode('utf-8')
+        def read_file_or_zip(upload_file: UploadFile):
+            content = upload_file.file.read()
+            if upload_file.filename.endswith('.zip'):
+                with zipfile.ZipFile(io.BytesIO(content)) as z:
+                    # Tìm file JSON hoặc XML đầu tiên trong zip
+                    for filename in z.namelist():
+                        if filename.endswith('.json') or filename.endswith('.xml'):
+                            return z.read(filename).decode('utf-8')
+                raise Exception("Không tìm thấy file .json hoặc .xml nào trong file ZIP.")
+            return content.decode('utf-8')
+
+        gt_str = read_file_or_zip(gt_file)
+        sub_str = read_file_or_zip(sub_file)
         
         report = evaluate_annotations(sub_str, gt_str)
         return report
